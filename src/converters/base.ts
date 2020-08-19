@@ -14,7 +14,7 @@ export abstract class AbstractConverter {
     public convert(node: Node, context: Context): Array<YamlModel> {
         var models = this.generate(node, context) || [];
         for (const model of models) {
-            model.summary = convertLinkToGfm(model.summary);
+            model.summary = convertLinkToGfm(model.summary, context.ParentUid);
             model.package = context.PackageName;
             if (context.NamespaceName) {
                 model.namespace = context.NamespaceName;
@@ -29,10 +29,11 @@ export abstract class AbstractConverter {
                 this.setCustomModuleName(model, node.comment);
 
                 const comment = node.comment ? node.comment : node.signatures[0].comment;
-                this.setDeprecated(model, comment);
-                this.setIsPreview(model, comment);
-                this.setRemarks(model, comment);
-                this.setInherits(model, comment);
+                this.setDeprecated(model, comment, context.ParentUid);
+                this.setIsPreview(model, comment, context.ParentUid);
+                this.setRemarks(model, comment, context.ParentUid);
+                this.setInherits(model, comment, context.ParentUid);
+                this.setExamples(model, comment, context.ParentUid);
             }
         }
 
@@ -56,42 +57,49 @@ export abstract class AbstractConverter {
         }
     }
 
-    private setDeprecated(model: YamlModel, comment: Comment) {
+    private setDeprecated(model: YamlModel, comment: Comment, parentUid?: string) {
         const deprecated = this.extractTextFromComment('deprecated', comment);
         if (deprecated != null) {
             model.deprecated = {
-                content: convertLinkToGfm(deprecated)
+                content: convertLinkToGfm(deprecated, parentUid)
             };
         }
     }
 
-    private setIsPreview(model: YamlModel, comment: Comment) {
+    private setIsPreview(model: YamlModel, comment: Comment, parentUid?: string) {
         const isPreview = this.extractTextFromComment('beta', comment);
         if (isPreview != null) {
             model.isPreview = true;
         }
     }
 
-    private setRemarks(model: YamlModel, comment: Comment) {
+    private setRemarks(model: YamlModel, comment: Comment, parentUid?: string) {
         const remarks = this.extractTextFromComment('remarks', comment);
         if (remarks != null) {
-            model.remarks = convertLinkToGfm(remarks);
+            model.remarks = convertLinkToGfm(remarks, parentUid);
         }
     }
 
-    private setCustomModuleName(model: YamlModel, comment: Comment) {
+    private setCustomModuleName(model: YamlModel, comment: Comment, parentUid?: string) {
         const customModuleName = this.extractTextFromComment('module', comment);
         if (customModuleName) {
             model.module = customModuleName;
         }
     }
 
-    private setInherits(model: YamlModel, comment: Comment) {
+    private setInherits(model: YamlModel, comment: Comment, parentUid?: string) {
         const inherits = this.extractTextFromComment('inherits', comment);
         if (inherits != null) {
             const tokens = getTextAndLink(inherits);
             if (tokens.length !== 2) return;
             model.inheritance = [{ type: tokens[0] }];
+        }
+    }
+
+    private setExamples(model: YamlModel, comment: Comment, parentUid?: string) {
+        const examples = this.extractTextFromComment('example', comment);
+        if (examples != null) {
+            model.example = [convertLinkToGfm(examples, parentUid)];
         }
     }
 
