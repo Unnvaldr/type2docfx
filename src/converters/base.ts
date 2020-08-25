@@ -50,7 +50,7 @@ export abstract class AbstractConverter {
                 // shift one line up as systematic off for TypeDoc
                 startLine: node.sources[0].line,
                 remote: {
-                    path: `${context.Repo.basePath}\\${node.sources[0].fileName}`,
+                    path: `${context.Repo.basePath}/${node.sources[0].fileName}`,
                     repo: context.Repo.repo,
                     branch: context.Repo.branch
                 }
