@@ -1,3 +1,4 @@
+import { releaseStages } from '../common/constants';
 import { YamlModel, YamlParameter, Type } from '../interfaces/YamlModel';
 import { Node, Parameter, Comment, ParameterType } from '../interfaces/TypeDocModel';
 import { typeToString } from '../idResolver';
@@ -13,7 +14,7 @@ export abstract class AbstractConverter {
 
     public convert(node: Node, context: Context): Array<YamlModel> {
         var models = this.generate(node, context) || [];
-        for (const model of models) {
+        for (let i = 0, model = models[i]; i < models.length; model = models[++i]) {
             model.summary = convertLinkToGfm(model.summary, context.ParentUid);
             model.package = context.PackageName;
             if (context.NamespaceName) {
@@ -25,15 +26,15 @@ export abstract class AbstractConverter {
 
             this.setSource(model, node, context);
 
-            if (node.comment || node.signatures && node.signatures.length && node.signatures[0].comment) {
-                this.setCustomModuleName(model, node.comment);
-
-                const comment = node.comment ? node.comment : node.signatures[0].comment;
+            if (node.comment || node.signatures && node.signatures.length && node.signatures[i].comment) {
+                const comment = !node.signatures || !node.signatures.length ? node.comment : node.signatures[i].comment;
+                this.setCustomModuleName(model, comment);
                 this.setDeprecated(model, comment, context.ParentUid);
-                this.setIsPreview(model, comment, context.ParentUid);
+                this.setIsPreview(model, comment);
                 this.setRemarks(model, comment, context.ParentUid);
-                this.setInherits(model, comment, context.ParentUid);
+                this.setInherits(model, comment);
                 this.setExamples(model, comment, context.ParentUid);
+                this.setReleaseStage(model, comment, context.ParentUid);
             }
         }
 
@@ -97,9 +98,17 @@ export abstract class AbstractConverter {
     }
 
     private setExamples(model: YamlModel, comment: Comment, parentUid?: string) {
-        const examples = this.extractTextFromComment('example', comment);
-        if (examples != null) {
-            model.example = [convertLinkToGfm(examples, parentUid)];
+        const examples = (comment.tags || []).filter(el => el.tag === 'example');
+        if (examples.length) {
+            model.example = examples.map(el => convertLinkToGfm(el.text.trim(), parentUid));
+        }
+    }
+
+    private setReleaseStage(model: YamlModel, comment: Comment, parentUid?: string) {
+        if(!comment.tags) return;
+        const releaseTags = (comment.tags || []).filter(el => releaseStages.includes(el.tag));
+        if(releaseTags.length) {
+            model.releaseStage = releaseTags.map(el => el.tag);
         }
     }
 

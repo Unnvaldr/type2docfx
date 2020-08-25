@@ -7,7 +7,7 @@ import { langs } from '../common/constants';
 
 export class TypeConverter extends AbstractConverter {
     protected generate(node: Node, context: Context): Array<YamlModel> {
-        // to add this to handle duplicate class and module under the same hirachy
+        // to add this to handle duplicate class and module under the same hierarchy
         if (node.kindString === 'Class' || node.kindString === 'Interface' || node.kindString === 'Type alias') {
             if (context.ParentKind === 'Class' || context.ParentKind === 'Interface') {
                 const currentUid = context.ParentUid + `.${node.name}`;

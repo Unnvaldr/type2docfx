@@ -20,6 +20,7 @@ export interface YamlModel {
     remarks?: string;
     optional?: boolean;
     example?: Array<string>;
+    releaseStage?: Array<string>;
 }
 
 export type Types = Type[] | string[];

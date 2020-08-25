@@ -35,6 +35,11 @@ export class Parser {
                 context.References);
             const newChild = this.traverse(child, uidMapping, newContext);
             if (models.length > 0) {
+                for (let el of newChild) {
+                    if(!models[0].releaseStage) break;
+                    if(el.releaseStage && el.releaseStage.length) continue;
+                    el.releaseStage = models[0].releaseStage;
+                }
                 models[0].children = [].concat(models[0].children, newChild);
             } else {
                 collection = [].concat(collection, newChild);
