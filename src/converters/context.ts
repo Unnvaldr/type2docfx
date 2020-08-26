@@ -38,6 +38,10 @@ export class Context {
         return this.moduleName;
     }
 
+    public get NamepathRoot() {
+        return this.moduleName === '' ? this.namespaceName : this.moduleName;
+    }
+
     public get References() {
         return this.references;
     }

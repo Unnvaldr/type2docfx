@@ -66,8 +66,9 @@ export function convertLinkToGfm(text: string, uidPrefix: string = null) {
     }
     return result;
 
+    // TODO: Make namepathOrURL more reliable
     function convertNamepathToUid(namepath: string) {
-      var uid = namepath;
+      var uid = namepath.replace(/~|-|#/g, '.');
       if (uidPrefix) {
         uid = uidPrefix + '.' + uid;
       }

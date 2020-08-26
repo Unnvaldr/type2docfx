@@ -15,7 +15,7 @@ export abstract class AbstractConverter {
     public convert(node: Node, context: Context): Array<YamlModel> {
         var models = this.generate(node, context) || [];
         for (let i = 0, model = models[i]; i < models.length; model = models[++i]) {
-            model.summary = convertLinkToGfm(model.summary, context.ParentUid);
+            model.summary = convertLinkToGfm(model.summary, context.NamepathRoot);
             model.package = context.PackageName;
             if (context.NamespaceName) {
                 model.namespace = context.NamespaceName;
@@ -29,12 +29,12 @@ export abstract class AbstractConverter {
             if (node.comment || node.signatures && node.signatures.length && node.signatures[i].comment) {
                 const comment = !node.signatures || !node.signatures.length ? node.comment : node.signatures[i].comment;
                 this.setCustomModuleName(model, comment);
-                this.setDeprecated(model, comment, context.ParentUid);
-                this.setIsPreview(model, comment);
-                this.setRemarks(model, comment, context.ParentUid);
+                this.setDeprecated(model, comment, context.NamepathRoot);
+                // this.setIsPreview(model, comment);
+                this.setRemarks(model, comment, context.NamepathRoot);
                 this.setInherits(model, comment);
-                this.setExamples(model, comment, context.ParentUid);
-                this.setReleaseStage(model, comment, context.ParentUid);
+                this.setExamples(model, comment, context.NamepathRoot);
+                this.setReleaseStage(model, comment, context.NamepathRoot);
             }
         }
 
