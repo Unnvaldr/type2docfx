@@ -18,19 +18,26 @@ export function resolveIds(element: YamlModel, uidMapping: UidMapping, reference
     }
 
     if (element.inheritance) {
-        element.inheritance[0].type = restoreReferences([element.inheritance[0].type] as any, uidMapping, referenceMapping)[0];
-        for (let child of (rootElement.children as YamlModel[])) {
-            if(child.uid !== element.inheritance[0].type) continue;
-            if(!child.inheritance) continue;
+        element.inheritance[0].type = restoreReferences(<any>[element.inheritance[0].type], uidMapping, referenceMapping)[0];
+        for (let child of <YamlModel[]>rootElement.children) {
+            if(child.uid !== element.inheritance[0].type || !child.inheritance) continue;
             if(child.inheritance[0].type != undefined) {
                 element.inheritance[0].inheritance = child.inheritance;
             } else {
                 element.inheritance[0].inheritance[0].type = restoreReferences([child.inheritance[0].type] as any, uidMapping, referenceMapping)[0];
             }
         }
+        // for (let parent = element.inheritance; parent != undefined; parent = parent[0].inheritance) {
+        //     console.log(element.uid, (<Type>parent[0].type).typeName)
+        //     parent[0].type = restoreReferences(<any>[parent[0].type], uidMapping, referenceMapping)[0];
+        // }
     }
 
     if (element.inheritedMembers) {
+        for (const el of <Type[]>element.inheritedMembers) {
+            const name = el.typeName.split('.').pop();
+            referenceMapping[`${element.uid}.${name}`] = restoreType(el, uidMapping);
+        }
         element.inheritedMembers = restoreReferences(element.inheritedMembers, uidMapping, referenceMapping);
     }
 

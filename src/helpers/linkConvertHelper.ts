@@ -5,12 +5,24 @@ var dfmRegex = [
 
 export function getTextAndLink(text: string) {
   var matches = dfmRegex[0].exec(text);
-  if (matches[1] && matches[3]) {
+  if (matches && matches[1] && matches[3]) {
     return [matches[1], matches[3]];
   }
   matches = dfmRegex[1].exec(text);
-  if (matches[3] && matches[2]) {
+  if (matches && matches[3] && matches[2]) {
     return [matches[3], matches[2]];
+  }
+  return [];
+}
+
+export function getLink(text: string) {
+  var matches = dfmRegex[0].exec(text);
+  if (matches && matches[3]) {
+    return [matches[3].replace(/~|-|#/g, '.')];
+  }
+  matches = dfmRegex[1].exec(text);
+  if (matches && matches[2]) {
+    return [matches[2].replace(/~|-|#/g, '.')];
   }
   return [];
 }
