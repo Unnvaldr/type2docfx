@@ -4,7 +4,7 @@ import * as fs from 'fs-extra';
 import * as serializer from 'js-yaml';
 import * as program from 'commander';
 import { Parser } from './parser';
-import { postTransform, insertClassReferenceForModule, insertInnerClassReference } from './postTransformer';
+import { postTransform, insertClassReferenceForModule, insertInnerClassReference, insertLink } from './postTransformer';
 import { generateTOC } from './tocGenerator';
 import { generatePackage } from './packageGenerator';
 import { resolveIds } from './idResolver';
@@ -109,6 +109,7 @@ const flattenElements = collection.map((rootElement, index) => {
     return a.concat(b);
 }, []);
 
+insertLink(flattenElements);
 insertClassReferenceForModule(flattenElements);
 console.log('Yaml dump start.');
 fs.ensureDirSync(outputPath);

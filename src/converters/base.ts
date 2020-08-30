@@ -2,7 +2,7 @@ import { releaseStages } from '../common/constants';
 import { YamlModel, YamlParameter, Type } from '../interfaces/YamlModel';
 import { Node, Parameter, Comment, ParameterType } from '../interfaces/TypeDocModel';
 import { typeToString } from '../idResolver';
-import { convertLinkToGfm, getTextAndLink } from '../helpers/linkConvertHelper';
+import { getTextAndLink } from '../helpers/linkConvertHelper';
 import { Context } from './context';
 
 export abstract class AbstractConverter {
@@ -15,7 +15,6 @@ export abstract class AbstractConverter {
     public convert(node: Node, context: Context): Array<YamlModel> {
         var models = this.generate(node, context) || [];
         for (let i = 0, model = models[i]; i < models.length; model = models[++i]) {
-            model.summary = convertLinkToGfm(model.summary, context.NamepathRoot);
             model.package = context.PackageName;
             if (context.NamespaceName) {
                 model.namespace = context.NamespaceName;
@@ -68,7 +67,7 @@ export abstract class AbstractConverter {
         const deprecated = this.extractTextFromComment('deprecated', comment);
         if (deprecated != null) {
             model.deprecated = {
-                content: convertLinkToGfm(deprecated, parentUid)
+                content: deprecated
             };
         }
     }
@@ -83,7 +82,7 @@ export abstract class AbstractConverter {
     private setRemarks(model: YamlModel, comment: Comment, parentUid?: string) {
         const remarks = this.extractTextFromComment('remarks', comment);
         if (remarks != null) {
-            model.remarks = convertLinkToGfm(remarks, parentUid);
+            model.remarks = remarks;
         }
     }
 
@@ -106,7 +105,7 @@ export abstract class AbstractConverter {
     private setExamples(model: YamlModel, comment: Comment, parentUid?: string) {
         const examples = (comment.tags || []).filter(el => el.tag === 'example');
         if (examples.length) {
-            model.example = examples.map(el => convertLinkToGfm(el.text.trim(), parentUid));
+            model.example = examples.map(el => el.text.trim());
         }
     }
 
@@ -288,7 +287,7 @@ export abstract class AbstractConverter {
                 return <YamlParameter>{
                     id: p.name,
                     type: this.extractType(p.type),
-                    description: convertLinkToGfm(description),
+                    description: description,
                     optional: p.flags && p.flags.isOptional
                 };
             });

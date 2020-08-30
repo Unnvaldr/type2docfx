@@ -3,7 +3,6 @@ import { Node } from '../interfaces/TypeDocModel';
 import { AbstractConverter } from './base';
 import * as _ from 'lodash';
 import { Context } from './context';
-import { convertLinkToGfm } from '../helpers/linkConvertHelper';
 import { langs } from '../common/constants';
 
 export class MethodConverter extends AbstractConverter {
@@ -34,9 +33,8 @@ export class MethodConverter extends AbstractConverter {
 
             this.extractInformationFromSignature(model, node, index);
             model.name = this.composeMethodNameFromSignature(model);
-            model.summary = convertLinkToGfm(model.summary, context.NamepathRoot);
             if (model.syntax.return) {
-                model.syntax.return.description = convertLinkToGfm(model.syntax.return.description, context.NamepathRoot);
+                model.syntax.return.description = model.syntax.return.description;
             }
             
             models.push(model);

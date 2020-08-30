@@ -3,6 +3,7 @@ import { constructorName, setOfTopLevelItems } from './common/constants';
 import { uidRegex } from './common/regex';
 import { flags } from './common/flags';
 import { ReferenceMapping } from './interfaces/ReferenceMapping';
+import { convertLinkToGfm, getTextAndLink } from './helpers/linkConvertHelper';
 
 export function groupOrphanFunctions(elements: YamlModel[]): { [key: string]: YamlModel[] } {
   if (elements && elements.length) {
@@ -67,6 +68,40 @@ function insertReferences(root: Root, references: ReferenceMapping): void {
     }
 
     root.references.push(reference);
+  }
+}
+
+export function insertLink(flattenElements: Root[]): void {
+  const refs = flattenElements.map(el => el.references).reduce((a, b) => a.concat(b), []);
+
+  for (let transformedClass of flattenElements) {
+      for (let child of transformedClass.items) {
+          child.summary = convertLinkToGfm(child.summary, child.uid, refs);
+
+          if (child.syntax) {
+            if (child.syntax.parameters) {
+              for (let el of child.syntax.parameters) {
+                el.description = convertLinkToGfm(el.description, child.uid, refs)
+              }
+            }
+
+            if (child.syntax.return) {
+              child.syntax.return.description = convertLinkToGfm(child.syntax.return.description, child.uid, refs);
+            }
+          }
+
+          if (child.deprecated) {
+            child.deprecated.content = convertLinkToGfm(child.deprecated.content, child.uid, refs);
+          }
+
+          if (child.remarks) {
+            child.remarks = convertLinkToGfm(child.remarks, child.uid, refs);
+          }
+
+          if (child.example) {
+            child.example = child.example.map(el => convertLinkToGfm(el, child.uid, refs));
+          }
+      }
   }
 }
 

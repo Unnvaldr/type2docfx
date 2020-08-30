@@ -1,3 +1,5 @@
+import { Reference } from '../interfaces/YamlModel';
+
 var dfmRegex = [
   /\[(?:([^\]]+))\]{(@link|@link|@linkcode|@linkplain) +(?:module:)?([^}| ]+)}/g,
   /\{(@link|@linkcode|@linkplain) +(?:module:)?([^}| ]+)(?:(?:\|| +)([^}]+))?\}/g
@@ -78,11 +80,19 @@ export function convertLinkToGfm(text: string, uidPrefix: string = null) {
     }
     return result;
 
-    // TODO: Make namepathOrURL more reliable
     function convertNamepathToUid(namepath: string) {
-      var uid = namepath.replace(/~|-|#/g, '.');
-      if (uidPrefix) {
-        uid = uidPrefix + '.' + uid;
+      var uid = namepath;
+      const criteria = namepath.replace(/~|#/g, '.');
+      let elUid = parentUid;
+      let n = -1;
+
+      while((n = elUid.lastIndexOf('.')) !== -1) {
+          let childUid = elUid = elUid.substring(0, n);
+          childUid += '.' + criteria;
+          let ref;
+          if(!(ref = refs.find(el => el.uid.includes(childUid)))) continue;
+          uid = ref['spec.typeScript'][0].uid;
+          break;
       }
       return encodeURIComponent(uid);
     }

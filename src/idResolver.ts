@@ -3,18 +3,39 @@ import { UidMapping } from './interfaces/UidMapping';
 import { ReferenceMapping } from './interfaces/ReferenceMapping';
 import { uidRegex } from './common/regex';
 import { setOfTopLevelItems } from './common/constants';
+import { getLink } from './helpers/linkConvertHelper';
 
 export function resolveIds(element: YamlModel, uidMapping: UidMapping, referenceMapping: ReferenceMapping, rootElement?: YamlModel): void {
+    if (element.type === 'module' || element.type === 'namespace') {
+        referenceMapping[element.uid] = `@uid:${element.uid}!@`;
+    }
+
+    if (element.summary) {
+        restoreLinks(element.summary, uidMapping, referenceMapping, element);
+    }
+
     if (element.syntax) {
         if (element.syntax.parameters) {
             for (const p of element.syntax.parameters) {
                 p.type = restoreReferences(p.type, uidMapping, referenceMapping);
+                p.description = restoreLinks(p.description, uidMapping, referenceMapping, element);
             }
         }
 
         if (element.syntax.return) {
             element.syntax.return.type = restoreReferences(element.syntax.return.type, uidMapping, referenceMapping);
+            element.syntax.return.description = restoreLinks(element.syntax.return.description, uidMapping, referenceMapping, element);
         }
+    }
+
+    if (element.deprecated) {
+        element.deprecated.content = restoreLinks(element.deprecated.content, uidMapping, referenceMapping, element);
+    }
+    if (element.remarks) {
+        element.remarks = restoreLinks(element.remarks, uidMapping, referenceMapping, element);
+    }
+    if (element.example) {
+        element.example = element.example.map(el => restoreLinks(el, uidMapping, referenceMapping, element));
     }
 
     if (element.inheritance) {
@@ -51,6 +72,24 @@ export function resolveIds(element: YamlModel, uidMapping: UidMapping, reference
             referenceMapping[child.uid] = `@uid:${child.uid}!@`;
         }
     }
+}
+
+function restoreLinks(comment: string, uidMapping: UidMapping, referenceMapping: ReferenceMapping, parent: YamlModel): string {
+    const link = getLink(comment);
+    if(!link.length) return;
+
+    let parentUid = parent.uid;
+    let n = -1;
+
+    while((n = parentUid.lastIndexOf('.')) !== -1) {
+        let childUid = parentUid = parentUid.substring(0, n);
+        childUid += '.' + link[0];
+        if(!Object.values(uidMapping).includes(childUid)) continue;
+        referenceMapping[childUid] = `@uid:${childUid}!@`;
+        break;
+    }
+
+    return comment;
 }
 
 function restoreReferences(types: Types, uidMapping: UidMapping, referenceMapping: ReferenceMapping): string[] {
