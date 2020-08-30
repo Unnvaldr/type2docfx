@@ -45,12 +45,18 @@ export abstract class AbstractConverter {
 
     private setSource(model: YamlModel, node: Node, context: Context) {
         if (context.Repo && node.sources && node.sources.length) {
+            let basePath = '';
+
+            if (context.Repo.basePath) {
+                basePath = context.Repo.basePath + '/';
+            }
+
             model.source = {
                 path: node.sources[0].fileName,
                 // shift one line up as systematic off for TypeDoc
                 startLine: node.sources[0].line,
                 remote: {
-                    path: `${context.Repo.basePath}/${node.sources[0].fileName}`,
+                    path: `${basePath}${node.sources[0].fileName}`,
                     repo: context.Repo.repo,
                     branch: context.Repo.branch
                 }

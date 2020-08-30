@@ -58,11 +58,11 @@ if (repoConfigPath && program.basePath) {
     }
 }
 
-if (!repoConfig && program.sourceUrl && program.sourceBranch && program.basePath) {
+if (!repoConfig && program.sourceUrl && program.sourceBranch) {
     repoConfig = {
         repo: program.sourceUrl,
         branch: program.sourceBranch,
-        basePath: program.basePath
+        basePath: program.basePath ?? ''
     };
 }
 
