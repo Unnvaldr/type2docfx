@@ -29,7 +29,7 @@ export function getLink(text: string) {
   return [];
 }
 
-export function convertLinkToGfm(text: string, uidPrefix: string = null) {
+export function convertLinkToGfm(text: string, parentUid: string, refs: Reference[]) {
   if (!text) return '';
   var dfmLinkRules = [
     {
