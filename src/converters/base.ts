@@ -28,12 +28,12 @@ export abstract class AbstractConverter {
             if (node.comment || node.signatures && node.signatures.length && node.signatures[i].comment) {
                 const comment = !node.signatures || !node.signatures.length ? node.comment : node.signatures[i].comment;
                 this.setCustomModuleName(model, comment);
-                this.setDeprecated(model, comment, context.NamepathRoot);
+                this.setDeprecated(model, comment);
                 // this.setIsPreview(model, comment);
-                this.setRemarks(model, comment, context.NamepathRoot);
+                this.setRemarks(model, comment);
                 this.setInherits(model, comment);
-                this.setExamples(model, comment, context.NamepathRoot);
-                this.setReleaseStage(model, comment, context.NamepathRoot);
+                this.setExamples(model, comment);
+                this.setReleaseStage(model, comment);
             }
         }
 
@@ -63,7 +63,7 @@ export abstract class AbstractConverter {
         }
     }
 
-    private setDeprecated(model: YamlModel, comment: Comment, parentUid?: string) {
+    private setDeprecated(model: YamlModel, comment: Comment) {
         const deprecated = this.extractTextFromComment('deprecated', comment);
         if (deprecated != null) {
             model.deprecated = {
@@ -72,28 +72,28 @@ export abstract class AbstractConverter {
         }
     }
 
-    private setIsPreview(model: YamlModel, comment: Comment, parentUid?: string) {
+    private setIsPreview(model: YamlModel, comment: Comment) {
         const isPreview = this.extractTextFromComment('beta', comment);
         if (isPreview != null) {
             model.isPreview = true;
         }
     }
 
-    private setRemarks(model: YamlModel, comment: Comment, parentUid?: string) {
+    private setRemarks(model: YamlModel, comment: Comment) {
         const remarks = this.extractTextFromComment('remarks', comment);
         if (remarks != null) {
             model.remarks = remarks;
         }
     }
 
-    private setCustomModuleName(model: YamlModel, comment: Comment, parentUid?: string) {
+    private setCustomModuleName(model: YamlModel, comment: Comment) {
         const customModuleName = this.extractTextFromComment('module', comment);
         if (customModuleName) {
             model.module = customModuleName;
         }
     }
 
-    private setInherits(model: YamlModel, comment: Comment, parentUid?: string) {
+    private setInherits(model: YamlModel, comment: Comment) {
         const inherits = this.extractTextFromComment('inherits', comment);
         if (inherits != null) {
             const tokens = getTextAndLink(inherits);
@@ -102,14 +102,14 @@ export abstract class AbstractConverter {
         }
     }
 
-    private setExamples(model: YamlModel, comment: Comment, parentUid?: string) {
+    private setExamples(model: YamlModel, comment: Comment) {
         const examples = (comment.tags || []).filter(el => el.tag === 'example');
         if (examples.length) {
             model.example = examples.map(el => el.text.trim());
         }
     }
 
-    private setReleaseStage(model: YamlModel, comment: Comment, parentUid?: string) {
+    private setReleaseStage(model: YamlModel, comment: Comment) {
         if(!comment.tags) return;
         const releaseTags = (comment.tags || []).filter(el => releaseStages.includes(el.tag));
         if(releaseTags.length) {
@@ -329,7 +329,7 @@ export abstract class AbstractConverter {
         if (node.kindString === 'Method' || node.kindString === 'Function') {
             const typeParameter = node.signatures[signatureIndex].typeParameter;
             method.name = `${node.name}${this.getGenericType(typeParameter)}`;
-            const functionBody = this.generateCallFunction(method.name, method.syntax.parameters, typeParameter);
+            const functionBody = this.generateCallFunction(node.name, method.syntax.parameters, typeParameter);
             let functionReturn = node.signatures[signatureIndex].type.name;
             if (node.signatures[signatureIndex].type) {
                 functionReturn = typeToString(this.extractType(node.signatures[signatureIndex].type)[0]);

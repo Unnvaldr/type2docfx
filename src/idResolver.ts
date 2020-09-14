@@ -76,7 +76,7 @@ export function resolveIds(element: YamlModel, uidMapping: UidMapping, reference
 
 function restoreLinks(comment: string, uidMapping: UidMapping, referenceMapping: ReferenceMapping, parent: YamlModel): string {
     const link = getLink(comment);
-    if(!link.length) return;
+    if(!link.length) return comment;
 
     let parentUid = parent.uid;
     let n = -1;
