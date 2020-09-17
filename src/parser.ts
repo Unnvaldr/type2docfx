@@ -1,7 +1,6 @@
 import { YamlModel } from './interfaces/YamlModel';
 import { Node } from './interfaces/TypeDocModel';
 import { UidMapping } from './interfaces/UidMapping';
-import * as _ from 'lodash';
 import { Converter } from './converters/converter';
 import { Context } from './converters/context';
 

@@ -2,7 +2,6 @@ import { YamlModel } from '../interfaces/YamlModel';
 import { Node } from '../interfaces/TypeDocModel';
 import { AbstractConverter } from './base';
 import { typeToString } from '../idResolver';
-import * as _ from 'lodash';
 import { Context } from './context';
 import { langs } from '../common/constants';
 
