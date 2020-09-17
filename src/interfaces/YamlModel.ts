@@ -1,7 +1,7 @@
 export interface YamlModel {
     uid: string;
     name: string;
-    children: Array<YamlModel> | Array<string>;
+    children: Array<YamlModel | string>;
     langs: Array<string>;
     type: string;
     summary?: string;
@@ -14,7 +14,7 @@ export interface YamlModel {
     source?: Source;
     inheritance?: Inheritance[];
     inheritedMembers?: Types;
-    implements?: Type[] | string[];
+    implements?: Types;
     deprecated?: Deprecated;
     isPreview?: boolean;
     remarks?: string;
@@ -22,8 +22,6 @@ export interface YamlModel {
     example?: Array<string>;
     releaseStage?: Array<string>;
 }
-
-export type Types = Type[] | string[];
 
 interface Inheritance {
     type: Type | string;
@@ -55,6 +53,7 @@ export interface Reference {
 
 export interface Syntax {
     parameters?: Array<YamlParameter>;
+    typeParameter?: Array<YamlParameter>;
     content?: string;
     return?: Return;
 }
@@ -69,6 +68,7 @@ export interface YamlParameter {
     type: Types;
     description: string;
     optional?: boolean;
+    rest?: boolean;
 }
 
 export interface Root {
@@ -84,24 +84,52 @@ export interface Type {
     intersectionType?: IntersectionType;
     unionType?: UnionType;
     arrayType?: Type | string;
+    typeParameterType?: TypeParameterType;
+    typeOperatorType?: TypeOperatorType;
+    indexedAccessType?: IndexedAccessType;
+    conditionalType?: ConditionalType;
 }
 
+export type Types = (Type | string)[];
+
 export interface UnionType {
-    types: Type[] | string[];
+    types: Types;
 }
 
 export interface IntersectionType {
-    types: Type[] | string[];
+    types: Types;
 }
 
 export interface GenericType {
     outter: Type | string;
-    inner: Type[] | string[];
+    inner: Types;
 }
 
 export interface ReflectedType {
     key: Type | string;
     value: Type | string;
+}
+
+export interface TypeParameterType {
+    name: string;
+    constraint?: Type | string;
+}
+
+export interface TypeOperatorType {
+    operator: string;
+    target: Type | string;
+}
+
+export interface IndexedAccessType {
+    indexType: Type | string;
+    objectType: Type | string;
+}
+
+export interface ConditionalType {
+    checkType: Type | string;
+    extendsType: Type | string;
+    falseType: Type | string;
+    trueType: Type | string;
 }
 
 export interface Exception {

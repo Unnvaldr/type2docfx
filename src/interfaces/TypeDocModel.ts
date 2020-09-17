@@ -15,7 +15,7 @@ export interface Node {
     implementedTypes: ParameterType[];
     inheritedFrom: ParameterType;
     sources: Source[];
-    typeParameter: ParameterType[];
+    typeParameter: Parameter[];
     getSignature: Node[] | Node;
     setSignature: Node[] | Node;
 }
@@ -54,7 +54,7 @@ export interface Signature {
     comment: Comment;
     parameters: Parameter[];
     type?: ParameterType;
-    typeParameter: ParameterType[];
+    typeParameter: Parameter[];
 }
 
 export interface Parameter {
@@ -74,8 +74,18 @@ export interface ParameterType {
     declaration: Node;
     elementType: ParameterType;
     elements: ParameterType[];
+    constraint: ParameterType;
+    operator: string;
+    target: ParameterType;
+    indexType: ParameterType;
+    objectType: ParameterType;
+    checkType: ParameterType;
+    extendsType: ParameterType;
+    falseType: ParameterType;
+    trueType: ParameterType;
 }
 
 interface ParameterFlag {
     isOptional: boolean;
+    isRest: boolean;
 }

@@ -36,12 +36,11 @@ export class TypeConverter extends AbstractConverter {
         }
 
         if (model.type === 'typealias') {
-            let typeArgumentsContent = this.parseTypeArgumentsForTypeAlias(node);
-            if (typeArgumentsContent) {
-                model.syntax = { content: 'type ' + model.name + typeArgumentsContent + ' = ' + this.parseTypeDeclarationForTypeAlias(node.type) };
-            } else {
-                model.syntax = { content: 'type ' + model.name + ' = ' + this.parseTypeDeclarationForTypeAlias(node.type) };
-            }
+            const typeArgumentsContent = this.getGenericType(node.typeParameter);
+            const typeDeclarationContent = this.parseTypeDeclarationForTypeAlias(node.type);
+            model.syntax = {
+                content: `type ${model.name}${typeArgumentsContent} = ${typeDeclarationContent}`
+            };
         }
 
         if (node.extendedTypes && node.extendedTypes.length) {

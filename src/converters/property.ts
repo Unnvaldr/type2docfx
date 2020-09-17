@@ -17,18 +17,23 @@ export class PropertyConverter extends AbstractConverter {
         let isOptional = node.flags && node.flags.isOptional ? '?' : '';
         let isConst = node.flags && node.flags.isConst ? 'const ' : '';
         let isReadonly = node.flags && node.flags.isReadonly ? 'readonly ' : '';
-        let defaultValue = node.defaultValue ? ` = ${_.trim(node.defaultValue)}` : '';
+        let defaultValue = node.defaultValue ? ` = ${node.defaultValue.trim()}` : '';
+        let name = node.name;
+        if (node.kindString === 'Index signature') {
+            name = `[${node.parameters[0].name}: ${typeToString(this.extractType(node.parameters[0].type)[0])}]`;
+            isPublic = '';
+        }
         const model: YamlModel = {
             uid: uid,
-            name: node.name,
-            fullName: node.name,
+            name: name,
+            fullName: name,
             children: [],
             langs: langs,
-            type: node.kindString.toLowerCase(),
+            type: (node.kindString === 'Index signature' ? 'Property' : node.kindString).toLowerCase(),
             summary: node.comment ? this.findDescriptionInComment(node.comment) : '',
             optional: node.flags && node.flags.isOptional,
             syntax: {
-                content: `${isPublic}${isProtected}${isPrivate}${isConst}${isReadonly}${isStatic}${node.name}${isOptional}: ${typeToString(this.extractType(node.type)[0], node.kindString)}${defaultValue}`,
+                content: `${isPublic}${isProtected}${isPrivate}${isConst}${isReadonly}${isStatic}${name}${isOptional}: ${typeToString(this.extractType(node.type)[0], node.kindString)}${defaultValue}`,
                 return: {
                     type: this.extractType(node.type),
                     description: this.extractReturnComment(node.comment)

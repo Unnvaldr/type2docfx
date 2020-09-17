@@ -129,11 +129,15 @@ export abstract class AbstractConverter {
         return null;
     }
 
-    protected getGenericType(typeParameters: ParameterType[]): string {
-        if (typeParameters && typeParameters.length) {
-            return `<${typeParameters[0].name}>`;
-        }
-        return '';
+    protected getGenericType(typeParameters: Parameter[] = []): string {
+        const els = typeParameters.map(el => {
+            let str = el.name;
+            if (el.type) {
+                str += ' extends ' + typeToString(this.extractType(el.type)[0]);
+            }
+            return str;
+        });
+        return els.length ? `<${els.join(', ')}>` : '';
     }
 
     protected findDescriptionInComment(comment: Comment): string {
@@ -201,13 +205,14 @@ export abstract class AbstractConverter {
                 }
             });
         } else if (type.type === 'reflection' && type.declaration) {
+            // TODO: Handle Parameter kind in better way
             if (type.declaration.indexSignature) {
                 let signatures = type.declaration.indexSignature;
                 signatures.forEach(signature => {
                     result.push({
                         reflectedType: {
                             key: {
-                                typeName: signature.parameters[0].type.name,
+                                typeName: `[${signature.parameters[0].name}: ${signature.parameters[0].type.name}]`,
                                 typeId: signature.parameters[0].type.id
                             },
                             value: {
@@ -221,11 +226,55 @@ export abstract class AbstractConverter {
                 result.push({
                     typeName: `${this.generateCallFunction('', this.fillParameters(type.declaration.signatures[0].parameters))} => ${typeToString(this.extractType(type.declaration.signatures[0].type)[0])}`
                 });
+            } else if (type.declaration.children && type.declaration.children.length) {
+                result.push({
+                    reflectedType: {
+                        key: {
+                            typeName: type.declaration.children[0].name,
+                            typeId: type.declaration.children[0].id
+                        },
+                        value: this.extractType(type.declaration.children[0].type)[0]
+                    }
+                });
             } else {
                 result.push({
-                    typeName: 'Object'
+                    typeName: '{}'
                 });
             }
+        } else if (type.type === 'typeParameter') {
+            result.push({
+                typeName: type.name,
+                typeParameterType: {
+                    name: type.name,
+                    constraint: this.extractType(type.constraint)[0]
+                }
+            });
+        } else if (type.type === 'typeOperator') {
+            result.push({
+                typeName: type.name,
+                typeOperatorType: {
+                    operator: type.operator,
+                    target: this.extractType(type.target)[0]
+                }
+            });
+        } else if (type.type === 'indexedAccess') {
+            result.push({
+                typeName: type.indexType.name,
+                typeId: type.indexType.id,
+                indexedAccessType: {
+                    indexType: this.extractType(type.indexType)[0],
+                    objectType: this.extractType(type.indexType.constraint ? type.indexType.constraint.target : type.objectType)[0]
+                }
+            });
+        } else if (type.type === 'conditional') {
+            result.push({
+                conditionalType: {
+                    checkType: this.extractType(type.checkType)[0],
+                    extendsType: this.extractType(type.extendsType)[0],
+                    falseType: this.extractType(type.falseType)[0],
+                    trueType: this.extractType(type.trueType)[0]
+                }
+            });
         } else if (type.typeArguments && type.typeArguments.length) {
             result.push({
                 genericType: {
@@ -235,6 +284,11 @@ export abstract class AbstractConverter {
                     },
                     inner: type.typeArguments.map(t => this.extractType(t)[0])
                 }
+            });
+        } else if (type.type === 'inferred') {
+            result.push({
+                typeName: `infer ${type.name}`,
+                typeId: type.id
             });
         } else if (type.name) {
             result.push({
@@ -270,9 +324,9 @@ export abstract class AbstractConverter {
         return false;
     }
 
-    protected generateCallFunction(prefix: string, parameters: YamlParameter[], typeParameters?: ParameterType[]): string {
+    protected generateCallFunction(prefix: string, parameters: YamlParameter[], typeParameters?: Parameter[]): string {
         if (parameters) {
-            return `${prefix}${this.getGenericType(typeParameters)}(${parameters.map(p => `${p.id}${p.optional ? '?' : ''}: ${(typeToString(p.type[0]))}`).join(', ')})`;
+            return `${prefix}${this.getGenericType(typeParameters)}(${parameters.map(p => `${p.rest ? '...' : ''}${p.id}${p.optional ? '?' : ''}: ${(typeToString(p.type[0]))}`).join(', ')})`;
         }
         return '';
     }
@@ -288,7 +342,8 @@ export abstract class AbstractConverter {
                     id: p.name,
                     type: this.extractType(p.type),
                     description: description,
-                    optional: p.flags && p.flags.isOptional
+                    optional: p.flags && p.flags.isOptional,
+                    rest: p.flags && p.flags.isRest
                 };
             });
         }
@@ -308,6 +363,7 @@ export abstract class AbstractConverter {
             method.summary = this.findDescriptionInComment(node.signatures[signatureIndex].comment);
         }
         method.syntax.parameters = this.fillParameters(node.signatures[signatureIndex].parameters);
+        method.syntax.typeParameter = this.fillParameters(node.signatures[signatureIndex].typeParameter);
 
         if (node.signatures[signatureIndex].type && node.kindString !== 'Constructor' && node.signatures[signatureIndex].type.name !== 'void') {
             method.syntax.return = {
@@ -356,144 +412,159 @@ export abstract class AbstractConverter {
         return method.name + '(' + parameterType + ')';
     }
 
-    protected parseTypeArgumentsForTypeAlias(node: Node | ParameterType): string {
-        let typeParameter;
-        if ((<Node>node).typeParameter) {
-            typeParameter = (<Node>node).typeParameter;
-        } else if ((<ParameterType>node).typeArguments) {
-            typeParameter = (<ParameterType>node).typeArguments;
-        }
-        if (typeParameter && typeParameter.length) {
-            let typeArgumentsList = typeParameter.map(item => {
-                return item.name;
-            }).join(',');
-            typeArgumentsList = '<' + typeArgumentsList + '>';
-            return typeArgumentsList;
-        }
-        return '';
-    }
+    // protected parseTypeArgumentsForTypeAlias(node: Node | Parameter | ParameterType): string {
+    //     let typeParameter;
+    //     if ((<Node>node).typeParameter) {
+    //         typeParameter = (<Node>node).typeParameter.map(el => el.type);
+    //     } else if ((<Parameter>node).type.typeArguments) {
+    //         typeParameter = (<Parameter>node).type.typeArguments;
+    //     } else if ((<ParameterType>node).typeArguments) {
+    //         typeParameter = (<ParameterType>node).typeArguments;
+    //     }
+    //     if (typeParameter && typeParameter.length) {
+    //         let typeArgumentsList = typeParameter.map(item => {
+    //             return typeToString(this.extractType(item)[0]);
+    //         }).join(', ');
+    //         typeArgumentsList = '<' + typeArgumentsList + '>';
+    //         return typeArgumentsList;
+    //     }
+    //     return '';
+    // }
+
+    // protected parseTypeDeclarationForTypeAlias(typeInfo: ParameterType): string {
+    //     switch (typeInfo.type) {
+    //         case 'union':
+    //             return this.parseUnionType(typeInfo);
+    //         case 'tuple':
+    //             return this.parseTupleType(typeInfo);
+    //         case 'reflection':
+    //             if (typeInfo.declaration) {
+    //                 if (typeInfo.declaration.signatures && typeInfo.declaration.signatures.length) {
+    //                     return this.parseFunctionType(typeInfo);
+    //                 }
+    //                 if (typeInfo.declaration.children) {
+    //                     return this.parseUserDefinedType(typeInfo);
+    //                 }
+    //                 return 'Object';
+    //             }
+    //             break;
+    //         case 'intersection':
+    //             return this.parseIntersection(typeInfo);
+    //         default:
+    //             let content = 'Object';
+    //             if (typeInfo.name) {
+    //                 content = typeInfo.name;
+    //             } else if (typeInfo.value) {
+    //                 content = typeInfo.value;
+    //             }
+    //             if (typeInfo.typeArguments && typeInfo.typeArguments.length) {
+    //                 content += this.parseTypeArgumentsForTypeAlias(typeInfo);
+    //             }
+    //             return content;
+    //     }
+    // }
 
     protected parseTypeDeclarationForTypeAlias(typeInfo: ParameterType): string {
-        switch (typeInfo.type) {
-            case 'union':
-                return this.parseUnionType(typeInfo);
-            case 'tuple':
-                return this.parseTupleType(typeInfo);
-            case 'reflection':
-                if (typeInfo.declaration) {
-                    if (typeInfo.declaration.signatures && typeInfo.declaration.signatures.length) {
-                        return this.parseFunctionType(typeInfo);
-                    }
-                    if (typeInfo.declaration.children) {
-                        return this.parseUserDefinedType(typeInfo);
-                    }
-                    return 'Object';
-                }
-                break;
-            case 'intersection':
-                return this.parseIntersection(typeInfo);
-            default:
-                let content = 'Object';
-                if (typeInfo.name) {
-                    content = typeInfo.name;
-                } else if (typeInfo.value) {
-                    content = typeInfo.value;
-                }
-                if (typeInfo.typeArguments && typeInfo.typeArguments.length) {
-                    content += this.parseTypeArgumentsForTypeAlias(typeInfo);
-                }
-                return content;
-        }
+        return typeToString(this.extractType(typeInfo)[0]);
     }
 
-    protected parseUnionType(typeInfo: ParameterType): string {
-        let content = '';
-        if (typeInfo.types && typeInfo.types.length) {
-            content = this.parseCommonTypeInfo(typeInfo, 'union', ' | ');
-        }
-        return content;
-    }
+    // protected parseUnionType(typeInfo: ParameterType): string {
+    //     let content = '';
+    //     if (typeInfo.types && typeInfo.types.length) {
+    //         content = this.parseCommonTypeInfo(typeInfo, 'union', ' | ');
+    //     }
+    //     return content;
+    // }
 
-    protected parseTupleType(typeInfo: ParameterType): string {
-        let content = '';
-        if (typeInfo.elements && typeInfo.elements.length) {
-            content = this.parseCommonTypeInfo(typeInfo, 'tuple', ', ');
-        }
-        content = '[ ' + content + ' ]';
-        return content;
-    }
+    // protected parseTupleType(typeInfo: ParameterType): string {
+    //     let content = '';
+    //     if (typeInfo.elements && typeInfo.elements.length) {
+    //         content = this.parseCommonTypeInfo(typeInfo, 'tuple', ', ');
+    //     }
+    //     content = '[ ' + content + ' ]';
+    //     return content;
+    // }
 
-    protected parseIntersection(typeInfo: ParameterType): string {
-        if (typeInfo.types && typeInfo.types.length) {
-            return this.parseCommonTypeInfo(typeInfo, 'intersection', ' & ');
-        }
-        return '';
-    }
+    // protected parseIntersection(typeInfo: ParameterType): string {
+    //     if (typeInfo.types && typeInfo.types.length) {
+    //         return this.parseCommonTypeInfo(typeInfo, 'intersection', ' & ');
+    //     }
+    //     return '';
+    // }
 
-    protected parseCommonTypeInfo(typeInfo: ParameterType, type: string, seperator: string): string {
-        let typeDeclaration;
-        if (type === 'tuple') {
-            typeDeclaration = typeInfo.elements;
-        } else {
-            typeDeclaration = typeInfo.types;
-        }
-        let content = typeDeclaration.map(item => {
-            if (item.name) {
-                // for generic
-                if (item.typeArguments && item.typeArguments.length) {
-                    return item.name + '<' + item.typeArguments[0].name + '>';
-                } else {
-                    return item.name;
-                }
-            } else if (item.value) {
-                return `"${item.value}"`;
-            } else if (item.type === 'array' && item.elementType) {
-                return `${item.elementType.name}[]`;
-            }
-            else {
-                return this.parseUserDefinedType(item);
-            }
-        }).join(seperator);
-        return content;
-    }
+    // protected parseCommonTypeInfo(typeInfo: ParameterType, type: string, seperator: string): string {
+    //     let typeDeclaration;
+    //     if (type === 'tuple') {
+    //         typeDeclaration = typeInfo.elements;
+    //     } else {
+    //         typeDeclaration = typeInfo.types;
+    //     }
+    //     let content = typeDeclaration.map(item => {
+    //         if (item.name) {
+    //             // for generic
+    //             if (item.typeArguments && item.typeArguments.length) {
+    //                 return item.name + '<' + item.typeArguments[0].name + '>';
+    //             } else {
+    //                 return item.name;
+    //             }
+    //         } else if (item.value) {
+    //             return `"${item.value}"`;
+    //         } else if (item.type === 'array' && item.elementType) {
+    //             return `${item.elementType.name}[]`;
+    //         }
+    //         else {
+    //             return this.parseUserDefinedType(item);
+    //         }
+    //     }).join(seperator);
+    //     return content;
+    // }
 
-    protected parseFunctionType(typeInfo: ParameterType): string {
-        let typeResult = this.extractType(typeInfo);
-        let content = '';
-        if (typeResult.length) {
-            content = typeResult[0].typeName;
-        }
-        return content;
-    }
+    // protected parseFunctionType(typeInfo: ParameterType): string {
+    //     let typeResult = this.extractType(typeInfo);
+    //     let content = '';
+    //     if (typeResult.length) {
+    //         content = typeResult[0].typeName;
+    //     }
+    //     return content;
+    // }
 
-    protected parseUserDefinedType(typeInfo: ParameterType): string {
-        if (!typeInfo.declaration || !typeInfo.declaration.children) {
-            return '';
-        }
-        let content = typeInfo.declaration.children.map(child => {
-            let type = '';
-            if (child.kindString === 'Variable') {
-                if (child.type.name) {
-                    let typeName = '';
-                    if (child.type.typeArguments && child.type.typeArguments.length) {
-                        typeName = child.type.name + '<' + child.type.typeArguments[0].name + '>';
-                    } else {
-                        typeName = child.type.name;
-                    }
-                    type = `${child.name}: ${typeName}`;
-                } else if (child.type.value) {
-                    type = `${child.name}: ${child.type.value}`;
-                } else {
-                    type = `${child.name}: Object`;
-                }
-            } else if (child.kindString === 'Function') {
-                type = `${this.generateCallFunction(child.name, this.fillParameters(child.signatures[0].parameters))} => ${typeToString(this.extractType(child.signatures[0].type)[0])}`;
-            }
-            return type;
+    // protected parseUserDefinedType(typeInfo: ParameterType): string {
+    //     if (!typeInfo.declaration || !typeInfo.declaration.children) {
+    //         return '';
+    //     }
+    //     let content = typeInfo.declaration.children.map(child => {
+    //         let type = '';
+    //         if (child.kindString === 'Variable') {
+    //             if (child.type.name) {
+    //                 let typeName = '';
+    //                 if (child.type.typeArguments && child.type.typeArguments.length) {
+    //                     typeName = child.type.name + '<' + child.type.typeArguments[0].name + '>';
+    //                 } else {
+    //                     typeName = child.type.name;
+    //                 }
+    //                 type = `${child.name}: ${typeName}`;
+    //             } else if (child.type.value) {
+    //                 type = `${child.name}: ${child.type.value}`;
+    //             } else if (child.type.elementType) {
+    //                 type = `${child.name}: ${typeToString(this.extractType(child.type)[0])}`
+    //             } else if (child.type.indexType) {
+    //                 type = `${child.name}: ${child.type.objectType.name}[${child.type.indexType.name}]}`
+    //             } else if (child.type.constraint) {
+    //                 type = this.parseTypeDeclarationForTypeAlias(child.type.constraint);
+    //             } else if (child.type.target) {
+    //                 type = this.parseTypeDeclarationForTypeAlias(child.type.target);
+    //             } else if (child.type.type === 'reference') {
+    //                 type = this.parseTypeDeclarationForTypeAlias(child.type);
+    //             } else {
+    //                 type = `${child.name}: Object`;
+    //             }
+    //         } else if (child.kindString === 'Function') {
+    //             type = `${this.generateCallFunction(child.name, this.fillParameters(child.signatures[0].parameters))} => ${typeToString(this.extractType(child.signatures[0].type)[0])}`;
+    //         }
+    //         return type;
 
-        }).join(', ');
-        content = '{ ' + content + ' }';
-        return content;
-    }
-
+    //     }).join(', ');
+    //     content = '{ ' + content + ' }';
+    //     return content;
+    // }
 }

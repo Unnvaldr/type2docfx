@@ -23,7 +23,13 @@ export class Parser {
             return collection;
         }
 
-        for (const child of node.children) {
+        let children = node.children;
+
+        if (node.indexSignature) {
+            children = children.concat(node.indexSignature);
+        }
+
+        for (const child of children) {
             const uid = models.length > 0 ? models[0].uid : context.PackageName;
             const newContext = new Context(
                 context.Repo,
@@ -50,7 +56,7 @@ export class Parser {
     }
 
     private needIgnore(node: Node): boolean {
-        if (node.name && node.name[0] === '_') {
+        if (node.kindString != 'Index signature' && node.name && node.name[0] === '_') {
             return true;
         }
 

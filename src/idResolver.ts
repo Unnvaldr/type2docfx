@@ -22,6 +22,12 @@ export function resolveIds(element: YamlModel, uidMapping: UidMapping, reference
             }
         }
 
+        if (element.syntax.typeParameter) {
+            for (const p of element.syntax.typeParameter) {
+                p.type = restoreReferences(p.type, uidMapping, referenceMapping);
+            }
+        }
+
         if (element.syntax.return) {
             element.syntax.return.type = restoreReferences(element.syntax.return.type, uidMapping, referenceMapping);
             element.syntax.return.description = restoreLinks(element.syntax.return.description, uidMapping, referenceMapping, element);
@@ -39,25 +45,21 @@ export function resolveIds(element: YamlModel, uidMapping: UidMapping, reference
     }
 
     if (element.inheritance) {
-        element.inheritance[0].type = restoreReferences(<any>[element.inheritance[0].type], uidMapping, referenceMapping)[0];
-        for (let child of <YamlModel[]>rootElement.children) {
-            if(child.uid !== element.inheritance[0].type || !child.inheritance) continue;
-            if(child.inheritance[0].type != undefined) {
+        element.inheritance[0].type = restoreReferences([element.inheritance[0].type], uidMapping, referenceMapping)[0];
+        for (let child of rootElement.children as YamlModel[]) {
+            if (child.uid !== element.inheritance[0].type || !child.inheritance) continue;
+            if (child.inheritance[0].type != undefined) {
                 element.inheritance[0].inheritance = child.inheritance;
             } else {
-                element.inheritance[0].inheritance[0].type = restoreReferences([child.inheritance[0].type] as any, uidMapping, referenceMapping)[0];
+                element.inheritance[0].inheritance[0].type = restoreReferences([child.inheritance[0].type], uidMapping, referenceMapping)[0];
             }
         }
-        // for (let parent = element.inheritance; parent != undefined; parent = parent[0].inheritance) {
-        //     console.log(element.uid, (<Type>parent[0].type).typeName)
-        //     parent[0].type = restoreReferences(<any>[parent[0].type], uidMapping, referenceMapping)[0];
-        // }
     }
 
     if (element.inheritedMembers) {
-        for (const el of <Type[]>element.inheritedMembers) {
-            const name = el.typeName.split('.').pop();
-            referenceMapping[`${element.uid}.${name}`] = restoreType(el, uidMapping);
+        for (const mbr of element.inheritedMembers as Type[]) {
+            const name = mbr.typeName.split('.').pop();
+            referenceMapping[`${element.uid}.${name}`] = restoreType(mbr, uidMapping);
         }
         element.inheritedMembers = restoreReferences(element.inheritedMembers, uidMapping, referenceMapping);
     }
@@ -137,6 +139,13 @@ function restoreType(type: Type | string, uidMapping: UidMapping): string {
         type.intersectionType.types = (type.intersectionType.types as Type[]).map(t => restoreType(t, uidMapping));
     } else if (type.arrayType) {
         type.arrayType = restoreType(type.arrayType, uidMapping);
+    } else if (type.typeParameterType && type.typeParameterType.constraint) {
+        type.typeParameterType.constraint = restoreType(type.typeParameterType.constraint, uidMapping);
+    } else if (type.typeOperatorType) {
+        type.typeOperatorType.target = restoreType(type.typeOperatorType.target, uidMapping);
+    } else if (type.indexedAccessType) {
+        type.indexedAccessType.indexType = restoreType(type.indexedAccessType.indexType, uidMapping);
+        type.indexedAccessType.objectType = restoreType(type.indexedAccessType.objectType, uidMapping);
     } else {
         if (type.typeId && uidMapping[type.typeId]) {
             type.typeName = `@uid:${uidMapping[type.typeId]}!@`;
@@ -163,7 +172,7 @@ export function typeToString(type: Type | string, kind?: string): string {
     }
 
     if (type.reflectedType) {
-        return `[key: ${typeToString(type.reflectedType.key)}]: ${typeToString(type.reflectedType.value)}`;
+        return `{ ${typeToString(type.reflectedType.key)}: ${typeToString(type.reflectedType.value)} }`;
     } else if (type.genericType) {
         return `${typeToString(type.genericType.outter)}<${((type.genericType.inner as Type[]).map(t => typeToString(t)).join(', '))}>`;
     } else if (type.unionType) {
@@ -172,6 +181,14 @@ export function typeToString(type: Type | string, kind?: string): string {
         return (type.intersectionType.types as Type[]).map(t => typeToString(t)).join(' & ');
     } else if (type.arrayType) {
         return `${typeToString(type.arrayType)}[]`;
+    } else if (type.typeParameterType) {
+        return `${type.typeName}`;
+    } else if (type.typeOperatorType) {
+        return `${type.typeOperatorType.operator} ${typeToString(type.typeOperatorType.target)}`;
+    } else if (type.indexedAccessType) {
+        return `${typeToString(type.indexedAccessType.objectType)}[${typeToString(type.indexedAccessType.indexType)}]`;
+    } else if (type.conditionalType) {
+        return `${typeToString(type.conditionalType.checkType)} extends ${typeToString(type.conditionalType.extendsType)} ? ${typeToString(type.conditionalType.trueType)} : ${typeToString(type.conditionalType.falseType)}`;
     } else {
         return typeToString(type.typeName);
     }
