@@ -42,6 +42,7 @@ if (!path || !outputPath) {
     console.log('Error: The input file path and output folder path is not specified!');
     program.help();
 }
+outputPath = outputPath.replace(/\\/g, '/');
 
 let repoConfig: RepoConfig;
 if (repoConfigPath && program.basePath) {
