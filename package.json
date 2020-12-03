@@ -5,7 +5,7 @@
   "main": "./dist/main.js",
   "bin": "./dist/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -newline lf",
     "test": "jest",
     "coverage": "jest --coverage"
   },
@@ -32,7 +32,7 @@
     "jest": "^24.9.0",
     "ts-jest": "^24.2.0",
     "tslint": "^5.20.1",
-    "typedoc": "^0.15.3",
+    "typedoc": "^0.19.2",
     "typescript": "^3.7.3"
   },
   "dependencies": {
