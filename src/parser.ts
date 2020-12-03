@@ -14,6 +14,7 @@ export class Parser {
 
         let models = new Converter().convert(node, context);
         for (const model of models) {
+            model.uid = this.checkForDuplicate(model, uidMapping);
             uidMapping[node.id] = model.uid;
             collection.push(model);
         }
@@ -52,6 +53,17 @@ export class Parser {
         }
 
         return collection;
+    }
+
+    private checkForDuplicate(model: YamlModel, uidMapping: UidMapping): string {
+        const arr = Object.values(uidMapping).filter(val => model.uid === val);
+        const arr2 = Object.values(uidMapping).filter(val => val.startsWith(model.uid) && val.match(/.*_\d+$/));
+        if(arr.length > 0) {
+            const newUid = model.uid.split('_');
+            newUid.splice(Math.min(1, newUid.length), 0, `${newUid.length > 1 ? arr2.length : arr2.length + 1}`);
+            model.uid = newUid.join('_');
+        }
+        return model.uid;
     }
 
     private needIgnore(node: Node): boolean {

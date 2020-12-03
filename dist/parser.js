@@ -14,6 +14,7 @@ var Parser = /** @class */ (function () {
         var models = new converter_1.Converter().convert(node, context);
         for (var _i = 0, models_1 = models; _i < models_1.length; _i++) {
             var model = models_1[_i];
+            model.uid = this.checkForDuplicate(model, uidMapping);
             uidMapping[node.id] = model.uid;
             collection.push(model);
         }
@@ -45,6 +46,16 @@ var Parser = /** @class */ (function () {
             }
         }
         return collection;
+    };
+    Parser.prototype.checkForDuplicate = function (model, uidMapping) {
+        var arr = Object.values(uidMapping).filter(function (val) { return model.uid === val; });
+        var arr2 = Object.values(uidMapping).filter(function (val) { return val.startsWith(model.uid) && val.match(/.*_\d+$/); });
+        if (arr.length > 0) {
+            var newUid = model.uid.split('_');
+            newUid.splice(Math.min(1, newUid.length), 0, "" + (newUid.length > 1 ? arr2.length : arr2.length + 1));
+            model.uid = newUid.join('_');
+        }
+        return model.uid;
     };
     Parser.prototype.needIgnore = function (node) {
         if (node.kindString != 'Index signature' && node.name && node.name[0] === '_') {

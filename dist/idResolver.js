@@ -9,7 +9,7 @@ function resolveIds(element, uidMapping, referenceMapping, rootElement) {
         referenceMapping[element.uid] = "@uid:" + element.uid + "!@";
     }
     if (element.summary) {
-        restoreLinks(element.summary, uidMapping, referenceMapping, element);
+        element.summary = restoreLinks(element.summary, uidMapping, referenceMapping, element);
     }
     if (element.syntax) {
         if (element.syntax.parameters) {

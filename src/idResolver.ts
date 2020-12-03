@@ -11,7 +11,7 @@ export function resolveIds(element: YamlModel, uidMapping: UidMapping, reference
     }
 
     if (element.summary) {
-        restoreLinks(element.summary, uidMapping, referenceMapping, element);
+        element.summary = restoreLinks(element.summary, uidMapping, referenceMapping, element);
     }
 
     if (element.syntax) {
