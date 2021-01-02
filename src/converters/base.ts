@@ -193,6 +193,12 @@ export abstract class AbstractConverter {
                     }
                 });
             }
+        } else if (type.type === 'tuple' && type.elements && type.elements.length) {
+            result.push({
+                tupleType: {
+                    elements: type.elements.map(t => this.extractType(t)[0])
+                }
+            });
         } else if (type.type === 'array') {
             let newType = this.extractType(type.elementType);
             result.push({

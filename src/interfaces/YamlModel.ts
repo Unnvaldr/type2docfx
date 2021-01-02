@@ -83,6 +83,7 @@ export interface Type {
     genericType?: GenericType;
     intersectionType?: IntersectionType;
     unionType?: UnionType;
+    tupleType?: TupleType;
     arrayType?: Type | string;
     typeParameterType?: TypeParameterType;
     typeOperatorType?: TypeOperatorType;
@@ -98,6 +99,10 @@ export interface UnionType {
 
 export interface IntersectionType {
     types: Types;
+}
+
+export interface TupleType {
+    elements: Types;
 }
 
 export interface GenericType {

@@ -133,10 +133,12 @@ function restoreType(type: Type | string, uidMapping: UidMapping): string {
     } else if (type.genericType) {
         type.genericType.inner = (type.genericType.inner as Type[]).map(t => restoreType(t, uidMapping));
         type.genericType.outter = restoreType(type.genericType.outter, uidMapping);
-    } if (type.unionType) {
+    } else if (type.unionType) {
         type.unionType.types = (type.unionType.types as Type[]).map(t => restoreType(t, uidMapping));
     } else if (type.intersectionType) {
         type.intersectionType.types = (type.intersectionType.types as Type[]).map(t => restoreType(t, uidMapping));
+    } else if (type.tupleType) {
+        type.tupleType.elements = (type.tupleType.elements as Type[]).map(t => restoreType(t, uidMapping));
     } else if (type.arrayType) {
         type.arrayType = restoreType(type.arrayType, uidMapping);
     } else if (type.typeParameterType && type.typeParameterType.constraint) {
@@ -179,6 +181,8 @@ export function typeToString(type: Type | string, kind?: string): string {
         return (type.unionType.types as Type[]).map(t => typeToString(t)).join(' | ');
     } else if (type.intersectionType) {
         return (type.intersectionType.types as Type[]).map(t => typeToString(t)).join(' & ');
+    } else if (type.tupleType) {
+        return `[${(type.tupleType.elements as Type[]).map(t => typeToString(t)).join(' | ')}]`;
     } else if (type.arrayType) {
         return `${typeToString(type.arrayType)}[]`;
     } else if (type.typeParameterType) {

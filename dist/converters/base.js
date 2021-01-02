@@ -172,6 +172,13 @@ var AbstractConverter = /** @class */ (function () {
                 });
             }
         }
+        else if (type.type === 'tuple' && type.elements && type.elements.length) {
+            result.push({
+                tupleType: {
+                    elements: type.elements.map(function (t) { return _this.extractType(t)[0]; })
+                }
+            });
+        }
         else if (type.type === 'array') {
             var newType = this.extractType(type.elementType);
             result.push({

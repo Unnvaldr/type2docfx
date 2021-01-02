@@ -127,11 +127,14 @@ function restoreType(type, uidMapping) {
         type.genericType.inner = type.genericType.inner.map(function (t) { return restoreType(t, uidMapping); });
         type.genericType.outter = restoreType(type.genericType.outter, uidMapping);
     }
-    if (type.unionType) {
+    else if (type.unionType) {
         type.unionType.types = type.unionType.types.map(function (t) { return restoreType(t, uidMapping); });
     }
     else if (type.intersectionType) {
         type.intersectionType.types = type.intersectionType.types.map(function (t) { return restoreType(t, uidMapping); });
+    }
+    else if (type.tupleType) {
+        type.tupleType.elements = type.tupleType.elements.map(function (t) { return restoreType(t, uidMapping); });
     }
     else if (type.arrayType) {
         type.arrayType = restoreType(type.arrayType, uidMapping);
@@ -180,6 +183,9 @@ function typeToString(type, kind) {
     }
     else if (type.intersectionType) {
         return type.intersectionType.types.map(function (t) { return typeToString(t); }).join(' & ');
+    }
+    else if (type.tupleType) {
+        return "[" + type.tupleType.elements.map(function (t) { return typeToString(t); }).join(' | ') + "]";
     }
     else if (type.arrayType) {
         return typeToString(type.arrayType) + "[]";
