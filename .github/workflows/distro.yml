@@ -22,6 +22,8 @@ jobs:
       - name: Commit changes
         run: |
           git checkout --orphan dist
+          git rm -rf .
+          mv "./dist/*" "."
           git add -f "./dist/*"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
