@@ -22,8 +22,8 @@ jobs:
       - name: Commit changes
         run: |
           if [ `git branch --remotes | grep  --extended-regexp "^[[:space:]]+origin/dist$"` ]; then
+            git add -f "./dist/"
             git stash
-            git add "./dist/"
             git checkout "dist" --
             git stash apply
           else
@@ -34,7 +34,7 @@ jobs:
             git checkout origin/patch-1 "LICENSE"
             git checkout origin/patch-1 "README.md"
           fi
-          git add "./dist/"
+          git add -f "./dist/"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git commit -m "Update distro" -m "Co-authored-by: $(git show ${{ github.sha }} --pretty='format:%an <%ae>')"
