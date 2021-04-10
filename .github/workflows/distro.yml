@@ -26,7 +26,8 @@ jobs:
           git add -f "./dist/*"
           git stash
           git checkout dist --
-          git stash pop
+          git stash show -p | git apply
+          git stash drop
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           ls -R "./dist/"
