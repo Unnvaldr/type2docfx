@@ -26,7 +26,7 @@ jobs:
           commit_email=$(git show ${{ github.sha }} --pretty='format:%ae')
           git config --local user.email "$commit_email"
           git config --local user.name "$commit_name"
-          git rebase patch-1
+          git merge patch-1
           git add -f "./dist/*"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
