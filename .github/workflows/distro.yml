@@ -21,7 +21,7 @@ jobs:
         run: yarn run build
       - name: Commit changes
         run: |
-          git checkout -b dist --
+          git checkout dist --
           commit_name=$(git show ${{ github.sha }} --pretty='format:%an')
           commit_email=$(git show ${{ github.sha }} --pretty='format:%ae')
           git config --local user.email "$commit_email"
