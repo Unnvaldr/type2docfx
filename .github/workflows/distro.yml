@@ -24,7 +24,7 @@ jobs:
           if [ `git branch --remotes | grep  --extended-regexp "^[[:space:]]+origin/dist$"` ]; then
             mv "./dist/" "./tmp/"
             git checkout "dist" --
-            mv -f "./tmo/" "./dist/"
+            mv -f "./tmp/" "./dist/"
           else
             git checkout --orphan "dist"
             git rm -rf "."
