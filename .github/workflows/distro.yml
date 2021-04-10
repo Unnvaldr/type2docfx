@@ -9,8 +9,6 @@ jobs:
     if: "contains(github.event.head_commit.message, 'Publish distro')"
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
@@ -22,7 +20,9 @@ jobs:
       - name: Commit changes
         run: |
           if [ `git branch --remotes | grep  --extended-regexp "^[[:space:]]+origin/dist$"` ]; then
+            git stash
             git checkout "dist" --
+            git stash apply
           else
             git checkout --orphan "dist"
             git rm -rf "."
