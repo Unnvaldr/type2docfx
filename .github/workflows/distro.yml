@@ -21,10 +21,15 @@ jobs:
         run: npm run build
       - name: Commit changes
         run: |
-          git checkout --orphan dist
-          git rm -rf .
-          git checkout origin/patch-1 package.json
-          git checkout origin/patch-1 package-lock.json
+          if [ `git branch --list dist` ]; then
+            git checkout dist
+          else
+            git checkout --orphan dist
+            git rm -rf .
+            git checkout origin/patch-1 package.json
+            git checkout origin/patch-1 package-lock.json
+          fi
+          git add "./dist/"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git commit -m "Update distro" -m "Co-authored-by: $(git show ${{ github.sha }} --pretty='format:%an <%ae>')"
