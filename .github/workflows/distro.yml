@@ -30,9 +30,10 @@ jobs:
           git add -f "./dist/*"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git commit -m "Update distro" -m "Co-authored-by: $(git diff-tree ${{ github.sha }} --pretty='format:%an <%ae>' -s)"
+          git commit -m "Update distro" -m "Co-authored-by: $(git show ${{ github.sha }} --pretty='format:%an <%ae>')"
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: dist
+          force: true
