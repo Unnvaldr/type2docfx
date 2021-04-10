@@ -18,10 +18,14 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Build
-        run: yarn run build
+        run: |
+          yarn run build
+          ls -R "./dist/"
       - name: Commit changes
         run: |
+          ls -R "./dist/"
           git checkout dist --
+          ls -R "./dist/"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add -f "./dist/"
