@@ -1,0 +1,35 @@
+name: Publish distro
+on:
+  push:
+    branches:
+      - patch-1
+jobs:
+  distro:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - name: Install dependencies
+        run: yarn install
+      - name: Build
+        run: yarn run build
+      - name: Commit changes
+        if: ${{ success() }}
+        run: |
+          git checkout -b dist
+          git checkout dist
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add "."
+          git commit -m "Update distro" -m "Co-authored-by: $(git diff-tree ${{ github.sha }} --pretty='format:%an <%ae>' -s)"
+      - name: Push changes
+        if: ${{ success() }}
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: dist
