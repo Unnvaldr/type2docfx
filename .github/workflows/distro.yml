@@ -18,19 +18,18 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Build
-        run: |
-          yarn run build
-          ls -R "./dist/"
+        run: yarn run build
       - name: Commit changes
         run: |
+          git checkout -b dist --
+          commit_name=$(git show ${{ github.sha }} --pretty='format:%an')
+          commit_email=$(git show ${{ github.sha }} --pretty='format:%ae')
+          git config --local user.email "$commit_email"
+          git config --local user.name "$commit_name"
+          git rebase patch-1
           git add -f "./dist/*"
-          git stash
-          git checkout dist --
-          git stash show -p | git apply
-          git stash drop
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          ls -R "./dist/"
           git commit -m "Update distro" -m "Co-authored-by: $(git diff-tree ${{ github.sha }} --pretty='format:%an <%ae>' -s)"
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
