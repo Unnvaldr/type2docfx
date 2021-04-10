@@ -21,13 +21,15 @@ jobs:
         run: npm run build
       - name: Commit changes
         run: |
-          if [ `git branch --list dist` ]; then
-            git checkout dist
+          if [ `git branch --list "dist"` ]; then
+            git checkout "dist"
           else
-            git checkout --orphan dist
-            git rm -rf .
-            git checkout origin/patch-1 package.json
-            git checkout origin/patch-1 package-lock.json
+            git checkout --orphan "dist"
+            git rm -rf "."
+            git checkout origin/patch-1 "package.json"
+            git checkout origin/patch-1 "package-lock.json"
+            git checkout origin/patch-1 "LICENSE"
+            git checkout origin/patch-1 "README.md"
           fi
           git add "./dist/"
           git config --local user.email "action@github.com"
