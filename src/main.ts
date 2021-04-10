@@ -133,7 +133,7 @@ flattenElements.forEach(element => {
     yamlModels.push(element.items[0]);
 });
 
-const packageIndex = yamlModels;
+const packageIndex = generatePackage(yamlModels);
 fs.writeFileSync(`${outputPath}/index.yml`, `${yamlHeader}\n${serializer.safeDump(packageIndex)}`);
 console.log('Package index generated.');
 
