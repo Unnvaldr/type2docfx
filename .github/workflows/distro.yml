@@ -23,6 +23,7 @@ jobs:
         run: |
           if [ `git branch --remotes | grep  --extended-regexp "^[[:space:]]+origin/dist$"` ]; then
             git stash
+            git add "./dist/"
             git checkout "dist" --
             git stash apply
           else
