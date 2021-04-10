@@ -22,10 +22,8 @@ jobs:
       - name: Commit changes
         run: |
           if [ `git branch --remotes | grep  --extended-regexp "^[[:space:]]+origin/dist$"` ]; then
-            git add -f "./dist/"
-            git stash
+            mv -f "./dist/" "./tmp/"
             git checkout "dist" --
-            git stash apply
           else
             git checkout --orphan "dist"
             git rm -rf "."
