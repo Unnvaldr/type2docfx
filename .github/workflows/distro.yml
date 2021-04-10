@@ -6,6 +6,7 @@ on:
 jobs:
   distro:
     runs-on: ubuntu-latest
+    if: "contains(github.event.head_commit.message, 'Publish distro')"
     steps:
       - uses: actions/checkout@v2
         with:
@@ -19,16 +20,13 @@ jobs:
       - name: Build
         run: yarn run build
       - name: Commit changes
-        if: ${{ success() }}
         run: |
           git checkout -b dist
-          git checkout dist
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add "."
+          git add "./dist/"
           git commit -m "Update distro" -m "Co-authored-by: $(git diff-tree ${{ github.sha }} --pretty='format:%an <%ae>' -s)"
       - name: Push changes
-        if: ${{ success() }}
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
