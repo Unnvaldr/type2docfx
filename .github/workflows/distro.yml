@@ -23,12 +23,11 @@ jobs:
           ls -R "./dist/"
       - name: Commit changes
         run: |
-          ls -R "./dist/"
           git checkout dist --
-          ls -R "./dist/"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add -f "./dist/"
+          ls -R "./dist/"
+          git add -f "./dist/*"
           git commit -m "Update distro" -m "Co-authored-by: $(git diff-tree ${{ github.sha }} --pretty='format:%an <%ae>' -s)"
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
