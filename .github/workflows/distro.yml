@@ -21,7 +21,7 @@ jobs:
         run: npm run build
       - name: Commit changes
         run: |
-          if [ `git branch --list "dist"` ]; then
+          if [ `git branch --remotes | grep  --extended-regexp "^[[:space:]]+origin/dist$"` ]; then
             git checkout "dist"
           else
             git checkout --orphan "dist"

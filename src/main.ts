@@ -140,3 +140,4 @@ console.log('Package index generated.');
 const toc = generateTOC(rootElementsForTOC, flattenElements[0].items[0].package);
 fs.writeFileSync(`${outputPath}/toc.yml`, serializer.safeDump(toc));
 console.log('Toc generated.');
+console.debug('Test message.');
