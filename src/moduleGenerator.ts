@@ -1,5 +1,6 @@
 import { YamlModel, Root } from './interfaces/YamlModel';
 import { TocItem } from './interfaces/TocItem';
+import { langs } from './common/constants';
 
 export function generateModules(tocRoots: TocItem[]): Root[] {
     let result: Root[] = [];
@@ -13,7 +14,7 @@ export function generateModules(tocRoots: TocItem[]): Root[] {
             uid: tocRoot.uid,
             name: tocRoot.name,
             summary: '',
-            langs: [ 'typeScript' ],
+            langs: langs,
             type: 'module',
             children: []
         };

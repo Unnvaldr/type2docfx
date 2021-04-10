@@ -1,4 +1,5 @@
 import { YamlModel, Root } from './interfaces/YamlModel';
+import { langs } from './common/constants';
 
 export function generatePackage(elements: YamlModel[]): Root {
     let root: Root = {
@@ -13,7 +14,7 @@ export function generatePackage(elements: YamlModel[]): Root {
             summary: '',
             children: [],
             type: 'package',
-            langs: [ 'typeScript' ]
+            langs: langs
         };
 
         elements.forEach(element => {
