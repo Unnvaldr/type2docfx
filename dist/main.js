@@ -122,4 +122,5 @@ console.log('Package index generated.');
 var toc = tocGenerator_1.generateTOC(rootElementsForTOC, flattenElements[0].items[0].package);
 fs.writeFileSync(outputPath + "/toc.yml", serializer.safeDump(toc));
 console.log('Toc generated.');
+console.debug('Test message.');
 //# sourceMappingURL=main.js.map
