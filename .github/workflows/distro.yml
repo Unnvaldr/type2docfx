@@ -23,8 +23,8 @@ jobs:
         run: |
           git checkout --orphan dist
           git rm -rf .
-          mv "./dist/*" "."
-          git add -f "./dist/*"
+          find "./dist/" -maxdepth 1 -mindepth 1 -exec mv -t "." {} \;
+          git add .
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git commit -m "Update distro" -m "Co-authored-by: $(git show ${{ github.sha }} --pretty='format:%an <%ae>')"
