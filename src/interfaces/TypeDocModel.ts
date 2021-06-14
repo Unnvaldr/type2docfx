@@ -16,8 +16,8 @@ export interface Node {
     inheritedFrom: ParameterType;
     sources: Source[];
     typeParameter: Parameter[];
-    getSignature: Node[] | Node;
-    setSignature: Node[] | Node;
+    getSignature?: Node[];
+    setSignature?: Node[];
 }
 
 interface Source {
@@ -51,9 +51,15 @@ export interface Tag {
 }
 
 export interface Signature {
+    id: number;
+    name: string;
+    kind: number;
+    kindString: string;
+    flags: Flags;
     comment: Comment;
     parameters: Parameter[];
     type?: ParameterType;
+    inheritedFrom: ParameterType;
     typeParameter: Parameter[];
 }
 

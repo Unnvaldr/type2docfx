@@ -9,18 +9,15 @@ export class PropertyConverter extends AbstractConverter {
     protected generate(node: Node, context: Context): Array<YamlModel> {
         const uid = context.ParentUid + '.' + node.name;
         console.log(` - ${node.kindString}: ${uid}`);
-        let isPublic = node.flags && (node.flags.isPublic || !(node.flags.isProtected || node.flags.isPrivate)) ? 'public ' : '';
-        let isProtected = node.flags && node.flags.isProtected ? 'protected ' : '';
-        let isPrivate = node.flags && node.flags.isPrivate ? 'private ' : '';
-        let isStatic = node.flags && node.flags.isStatic ? 'static ' : '';
-        let isOptional = node.flags && node.flags.isOptional ? '?' : '';
-        let isConst = node.flags && node.flags.isConst ? 'const ' : '';
-        let isReadonly = node.flags && node.flags.isReadonly ? 'readonly ' : '';
-        let defaultValue = node.defaultValue ? ` = ${node.defaultValue.trim()}` : '';
+        const accessModifier = this.extractAccessModifier(node);
+        const isStatic = node.flags && node.flags.isStatic ? 'static ' : '';
+        const isOptional = node.flags && node.flags.isOptional ? '?' : '';
+        const isConst = node.flags && node.flags.isConst ? 'const ' : '';
+        const isReadonly = node.flags && node.flags.isReadonly ? 'readonly ' : '';
+        const defaultValue = node.defaultValue ? ` = ${node.defaultValue.trim()}` : '';
         let name = node.name;
         if (node.kindString === 'Index signature') {
             name = `[${node.parameters[0].name}: ${typeToString(this.extractType(node.parameters[0].type)[0])}]`;
-            isPublic = '';
         }
         const model: YamlModel = {
             uid: uid,
@@ -32,7 +29,7 @@ export class PropertyConverter extends AbstractConverter {
             summary: node.comment ? this.findDescriptionInComment(node.comment) : '',
             optional: node.flags && node.flags.isOptional,
             syntax: {
-                content: `${isPublic}${isProtected}${isPrivate}${isConst}${isReadonly}${isStatic}${name}${isOptional}: ${typeToString(this.extractType(node.type)[0], node.kindString)}${defaultValue}`,
+                content: `${accessModifier}${isConst}${isReadonly}${isStatic}${name}${isOptional}: ${typeToString(this.extractType(node.type)[0], node.kindString)}${defaultValue}`,
                 return: {
                     type: this.extractType(node.type),
                     description: this.extractReturnComment(node.comment)

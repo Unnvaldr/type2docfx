@@ -6,7 +6,7 @@ import { langs } from '../common/constants';
 
 export class MethodConverter extends AbstractConverter {
     protected generate(node: Node, context: Context): Array<YamlModel> {
-        if (!node.signatures) {
+        if (!node.signatures?.length) {
             return;
         }
 

@@ -1,6 +1,6 @@
 import { releaseStages } from '../common/constants';
 import { YamlModel, YamlParameter, Type } from '../interfaces/YamlModel';
-import { Node, Parameter, Comment, ParameterType } from '../interfaces/TypeDocModel';
+import { Node, Signature, Parameter, Comment, ParameterType } from '../interfaces/TypeDocModel';
 import { typeToString } from '../idResolver';
 import { getTextAndLink } from '../helpers/linkConvertHelper';
 import { Context } from './context';
@@ -24,25 +24,26 @@ export abstract class AbstractConverter {
             }
 
             this.setSource(model, node, context);
-
-            if (node.comment || node.signatures && node.signatures.length && node.signatures[i].comment) {
-                const comment = !node.signatures || !node.signatures.length ? node.comment : node.signatures[i].comment;
-                this.setCustomModuleName(model, comment);
-                this.setDeprecated(model, comment);
-                // this.setIsPreview(model, comment);
-                this.setRemarks(model, comment);
-                this.setInherits(model, comment);
-                this.setExamples(model, comment);
-                this.setReleaseStage(model, comment);
-            }
+            this.setTags(model, (node.signatures && node.signatures.length ? node.signatures[i] : node).comment, context);
         }
 
-        return models;
+        return models.filter(el => el.uid);
     }
 
     protected abstract generate(node: Node, context: Context): Array<YamlModel>;
 
-    private setSource(model: YamlModel, node: Node, context: Context) {
+    protected setTags(model: YamlModel, comment: Comment, context: Context) {
+        if (!comment) return;
+        this.setCustomModuleName(model, comment);
+        this.setDeprecated(model, comment);
+        // this.setIsPreview(model, comment);
+        this.setRemarks(model, comment);
+        this.setInherits(model, comment);
+        this.setExamples(model, comment);
+        this.setReleaseStage(model, comment);
+    }
+
+    protected setSource(model: YamlModel, node: Node, context: Context) {
         if (context.Repo && node.sources && node.sources.length) {
             let basePath = '';
 
@@ -63,7 +64,7 @@ export abstract class AbstractConverter {
         }
     }
 
-    private setDeprecated(model: YamlModel, comment: Comment) {
+    protected setDeprecated(model: YamlModel, comment: Comment) {
         const deprecated = this.extractTextFromComment('deprecated', comment);
         if (deprecated != null) {
             model.deprecated = {
@@ -72,28 +73,28 @@ export abstract class AbstractConverter {
         }
     }
 
-    private setIsPreview(model: YamlModel, comment: Comment) {
+    protected setIsPreview(model: YamlModel, comment: Comment) {
         const isPreview = this.extractTextFromComment('beta', comment);
         if (isPreview != null) {
             model.isPreview = true;
         }
     }
 
-    private setRemarks(model: YamlModel, comment: Comment) {
+    protected setRemarks(model: YamlModel, comment: Comment) {
         const remarks = this.extractTextFromComment('remarks', comment);
         if (remarks != null) {
             model.remarks = remarks;
         }
     }
 
-    private setCustomModuleName(model: YamlModel, comment: Comment) {
+    protected setCustomModuleName(model: YamlModel, comment: Comment) {
         const customModuleName = this.extractTextFromComment('module', comment);
         if (customModuleName) {
             model.module = customModuleName;
         }
     }
 
-    private setInherits(model: YamlModel, comment: Comment) {
+    protected setInherits(model: YamlModel, comment: Comment) {
         const inherits = this.extractTextFromComment('inherits', comment);
         if (inherits != null) {
             const tokens = getTextAndLink(inherits);
@@ -102,14 +103,14 @@ export abstract class AbstractConverter {
         }
     }
 
-    private setExamples(model: YamlModel, comment: Comment) {
+    protected setExamples(model: YamlModel, comment: Comment) {
         const examples = (comment.tags || []).filter(el => el.tag === 'example');
         if (examples.length) {
             model.example = examples.map(el => el.text.trim());
         }
     }
 
-    private setReleaseStage(model: YamlModel, comment: Comment) {
+    protected setReleaseStage(model: YamlModel, comment: Comment) {
         if(!comment.tags) return;
         const releaseTags = (comment.tags || []).filter(el => releaseStages.includes(el.tag));
         if(releaseTags.length) {
@@ -364,6 +365,22 @@ export abstract class AbstractConverter {
         return comment.returns.trim();
     }
 
+    protected extractAccessModifier(node: Node): string {
+        if (!node.flags || node.kindString === 'Index signature') {
+            return '';
+        }
+
+        if (node.flags.isPublic) {
+            return 'public ';
+        } else if (node.flags.isProtected) {
+            return 'protected ';
+        } else if (node.flags.isPrivate) {
+            return 'private ';
+        } else {
+            return '';
+        }
+    }
+
     protected extractInformationFromSignature(method: YamlModel, node: Node, signatureIndex: number) {
         if (node.signatures[signatureIndex].comment) {
             method.summary = this.findDescriptionInComment(node.signatures[signatureIndex].comment);
@@ -388,7 +405,8 @@ export abstract class AbstractConverter {
             method.exceptions = exceptions.map(e => extractException(e));
         }
         */
-        if (node.kindString === 'Method' || node.kindString === 'Function') {
+
+        if (['Method', 'Function', 'Accessor'].includes(node.kindString)) {
             const typeParameter = node.signatures[signatureIndex].typeParameter;
             method.name = `${node.name}${this.getGenericType(typeParameter)}`;
             const functionBody = this.generateCallFunction(node.name, method.syntax.parameters, typeParameter);
@@ -396,17 +414,17 @@ export abstract class AbstractConverter {
             if (node.signatures[signatureIndex].type) {
                 functionReturn = typeToString(this.extractType(node.signatures[signatureIndex].type)[0]);
             }
+            const isAccessor = node.kindString === 'Accessor' ? `${node.signatures[signatureIndex].kindString.substring(0, 3).toLowerCase()} ` : '';
             const isStatic = node.flags && node.flags.isStatic ? 'static ' : '';
             const isAbstract = node.flags && node.flags.isAbstract ? 'abstract ' : '';
-            method.syntax.content = `${isStatic}${isAbstract}${functionBody}: ${functionReturn}`;
-            method.type = node.kindString.toLowerCase();
+            const accessModifier = this.extractAccessModifier(node);
+            method.syntax.content = `${accessModifier}${isStatic}${isAbstract}${isAccessor}${functionBody}: ${functionReturn}`;
+            method.type = node.kindString !== 'Accessor' ? node.kindString.toLowerCase() : 'property';
         } else {
             method.name = method.uid.split('.').reverse()[1];
             const functionBody = this.generateCallFunction(method.name, method.syntax.parameters);
-            const isPublic = node.flags && (node.flags.isPublic || !(node.flags.isProtected || node.flags.isPrivate)) ? 'public ' : '';
-            const isProtected = node.flags && node.flags.isProtected ? 'protected ' : '';
-            const isPrivate = node.flags && node.flags.isPrivate ? 'private ' : '';
-            method.syntax.content = `${isPublic}${isProtected}${isPrivate}${functionBody}: ${method.name}`;
+            const accessModifier = this.extractAccessModifier(node);
+            method.syntax.content = `${accessModifier}${functionBody}: ${method.name}`;
             method.type = 'constructor';
         }
     }
