@@ -74,8 +74,8 @@ function insertLink(flattenElements) {
             child.summary = linkConvertHelper_1.convertLinkToGfm(child.summary, child.uid, refs);
             if (child.syntax) {
                 if (child.syntax.parameters) {
-                    for (var _i = 0, _a = child.syntax.parameters; _i < _a.length; _i++) {
-                        var el = _a[_i];
+                    for (var _c = 0, _d = child.syntax.parameters; _c < _d.length; _c++) {
+                        var el = _d[_c];
                         el.description = linkConvertHelper_1.convertLinkToGfm(el.description, child.uid, refs);
                     }
                 }

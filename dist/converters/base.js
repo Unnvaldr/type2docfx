@@ -19,18 +19,20 @@ var AbstractConverter = /** @class */ (function () {
                 model.module = context.ModuleName;
             }
             this.setSource(model, node, context);
-            if (node.comment || node.signatures && node.signatures.length && node.signatures[i].comment) {
-                var comment = !node.signatures || !node.signatures.length ? node.comment : node.signatures[i].comment;
-                this.setCustomModuleName(model, comment);
-                this.setDeprecated(model, comment);
-                // this.setIsPreview(model, comment);
-                this.setRemarks(model, comment);
-                this.setInherits(model, comment);
-                this.setExamples(model, comment);
-                this.setReleaseStage(model, comment);
-            }
+            this.setTags(model, (node.signatures && node.signatures.length ? node.signatures[i] : node).comment, context);
         }
-        return models;
+        return models.filter(function (el) { return el.uid; });
+    };
+    AbstractConverter.prototype.setTags = function (model, comment, context) {
+        if (!comment)
+            return;
+        this.setCustomModuleName(model, comment);
+        this.setDeprecated(model, comment);
+        // this.setIsPreview(model, comment);
+        this.setRemarks(model, comment);
+        this.setInherits(model, comment);
+        this.setExamples(model, comment);
+        this.setReleaseStage(model, comment);
     };
     AbstractConverter.prototype.setSource = function (model, node, context) {
         if (context.Repo && node.sources && node.sources.length) {
@@ -352,6 +354,23 @@ var AbstractConverter = /** @class */ (function () {
         }
         return comment.returns.trim();
     };
+    AbstractConverter.prototype.extractAccessModifier = function (node) {
+        if (!node.flags || node.kindString === 'Index signature') {
+            return '';
+        }
+        if (node.flags.isPublic) {
+            return 'public ';
+        }
+        else if (node.flags.isProtected) {
+            return 'protected ';
+        }
+        else if (node.flags.isPrivate) {
+            return 'private ';
+        }
+        else {
+            return '';
+        }
+    };
     AbstractConverter.prototype.extractInformationFromSignature = function (method, node, signatureIndex) {
         if (node.signatures[signatureIndex].comment) {
             method.summary = this.findDescriptionInComment(node.signatures[signatureIndex].comment);
@@ -375,7 +394,7 @@ var AbstractConverter = /** @class */ (function () {
             method.exceptions = exceptions.map(e => extractException(e));
         }
         */
-        if (node.kindString === 'Method' || node.kindString === 'Function') {
+        if (['Method', 'Function', 'Accessor'].includes(node.kindString)) {
             var typeParameter = node.signatures[signatureIndex].typeParameter;
             method.name = "" + node.name + this.getGenericType(typeParameter);
             var functionBody = this.generateCallFunction(node.name, method.syntax.parameters, typeParameter);
@@ -383,18 +402,18 @@ var AbstractConverter = /** @class */ (function () {
             if (node.signatures[signatureIndex].type) {
                 functionReturn = idResolver_1.typeToString(this.extractType(node.signatures[signatureIndex].type)[0]);
             }
+            var isAccessor = node.kindString === 'Accessor' ? node.signatures[signatureIndex].kindString.substring(0, 3).toLowerCase() + " " : '';
             var isStatic = node.flags && node.flags.isStatic ? 'static ' : '';
             var isAbstract = node.flags && node.flags.isAbstract ? 'abstract ' : '';
-            method.syntax.content = "" + isStatic + isAbstract + functionBody + ": " + functionReturn;
-            method.type = node.kindString.toLowerCase();
+            var accessModifier = this.extractAccessModifier(node);
+            method.syntax.content = "" + accessModifier + isStatic + isAbstract + isAccessor + functionBody + ": " + functionReturn;
+            method.type = node.kindString !== 'Accessor' ? node.kindString.toLowerCase() : 'property';
         }
         else {
             method.name = method.uid.split('.').reverse()[1];
             var functionBody = this.generateCallFunction(method.name, method.syntax.parameters);
-            var isPublic = node.flags && (node.flags.isPublic || !(node.flags.isProtected || node.flags.isPrivate)) ? 'public ' : '';
-            var isProtected = node.flags && node.flags.isProtected ? 'protected ' : '';
-            var isPrivate = node.flags && node.flags.isPrivate ? 'private ' : '';
-            method.syntax.content = "" + isPublic + isProtected + isPrivate + functionBody + ": " + method.name;
+            var accessModifier = this.extractAccessModifier(node);
+            method.syntax.content = "" + accessModifier + functionBody + ": " + method.name;
             method.type = 'constructor';
         }
     };
