@@ -1,44 +1,56 @@
 name: Publish distro
 on:
-  push:
-    branches:
-      - patch-1
+    push:
+        branches:
+            - patch-1
 jobs:
-  distro:
-    runs-on: ubuntu-latest
-    if: "contains(github.event.head_commit.message, 'Publish distro')"
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: 12.x
-      - name: Install dependencies
-        run: npm install
-      - name: Build
-        run: npm run build
-      - name: Commit changes
-        run: |
-          if [ `git branch --remotes | grep  --extended-regexp "^[[:space:]]+origin/dist$"` ]; then
-            mv "./dist/" "./tmp/"
-            git checkout "dist" --
-            find "./tmp/" -mindepth 1 -type f -exec bash -c 'path="${0#./tmp/}" && mkdir -p `dirname ./dist/$path` && mv "$0" "./dist/$path"' {} \;
-          else
-            git checkout --orphan "dist"
-            git rm -rf "."
-            git checkout origin/patch-1 "package.json"
-            git checkout origin/patch-1 "package-lock.json"
-            git checkout origin/patch-1 "LICENSE"
-            git checkout origin/patch-1 "README.md"
-          fi
-          git add -f "./dist/"
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git commit -m "Update distro" -m "Co-authored-by: $(git show ${{ github.sha }} --pretty='format:%an <%ae>')"
-      - name: Push changes
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: dist
+    distro:
+        runs-on: ubuntu-latest
+        if: "contains(github.event.head_commit.message, 'Publish distro')"
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0
+            - name: Setup Node.js
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 12.x
+            - name: Install dependencies
+              run: npm install
+            - name: Build
+              run: npm run build
+            - name: Prepare branch
+              id: prepare
+              run: |
+                  if [ `git branch --remotes | grep  --extended-regexp "^[[:space:]]+origin/dist$"` ]; then
+                    echo "Update dist branch"
+                    mv "./dist/" "./tmp/"
+                    git checkout -f "dist"
+                    find "./tmp/" -mindepth 1 -type f -exec bash -c 'path="${0#./tmp/}" && mkdir -p `dirname ./dist/$path` && mv "$0" "./dist/$path"' {} \;
+                  else
+                    echo "Create new dist branch"
+                    git checkout --orphan "dist"
+                    git rm -rf "."
+                  fi
+                  git checkout -f patch-1 -- "package.json"
+                  git checkout -f patch-1 -- "package-lock.json"
+                  git checkout -f patch-1 -- "LICENSE"
+                  git checkout -f patch-1 -- "README.md"
+                  git add -f "." ":!./node_modules/"
+                  files=$(git ls-files)
+                  if [[ " ${files[@]} " == *"node_modules/"* ]]; then
+                    git rm -q -rf --cached "./node_modules/"
+                  fi
+                  echo "::set-output name=changes::$([[ $(git status -uno -s) != "" ]] && echo true || echo false)"
+            - name: Commit changes
+              if: ${{ steps.prepare.outputs.changes == 'true' }}
+              run: |
+                  git config --local user.email "action@github.com"
+                  git config --local user.name "GitHub Action"
+                  git commit -m "Update distro" -m "Co-authored-by: $(git show ${{ github.sha }} --pretty='format:%an <%ae>')"
+            - name: Push branch
+              if: ${{ steps.prepare.outputs.changes == 'true' }}
+              uses: ad-m/github-push-action@v0.6.0
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  branch: dist
