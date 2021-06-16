@@ -7,7 +7,7 @@ import { Parser } from './parser';
 import { postTransform, insertClassReferenceForModule, insertInnerClassReference, insertLink } from './postTransformer';
 import { generateTOC } from './tocGenerator';
 import { generatePackage } from './packageGenerator';
-import { resolveIds } from './idResolver';
+import { resolveIds, resolveInheritance } from './idResolver';
 import { YamlModel } from './interfaces/YamlModel';
 import { UidMapping } from './interfaces/UidMapping';
 import { RepoConfig } from './interfaces/RepoConfig';
@@ -95,6 +95,7 @@ if (!collection || collection.length === 0) {
 const referenceMappings: ReferenceMapping[] = [];
 for (const rootElement of collection) {
     let referenceMapping = {};
+    resolveInheritance(rootElement, uidMapping, referenceMapping, rootElement);
     resolveIds(rootElement, uidMapping, referenceMapping, rootElement);
     referenceMappings.push(referenceMapping);
 }

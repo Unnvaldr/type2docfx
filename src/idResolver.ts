@@ -44,6 +44,15 @@ export function resolveIds(element: YamlModel, uidMapping: UidMapping, reference
         element.example = element.example.map(el => restoreLinks(el, uidMapping, referenceMapping, element));
     }
 
+    for (const child of element.children as YamlModel[]) {
+        resolveIds(child, uidMapping, referenceMapping, rootElement);
+        if (setOfTopLevelItems.has(child.type)) {
+            referenceMapping[child.uid] = `@uid:${child.uid}!@`;
+        }
+    }
+}
+
+export function resolveInheritance(element: YamlModel, uidMapping: UidMapping, referenceMapping: ReferenceMapping, rootElement?: YamlModel) {
     if (element.inheritance) {
         element.inheritance[0].type = restoreReferences([element.inheritance[0].type], uidMapping, referenceMapping)[0];
         for (let child of rootElement.children as YamlModel[]) {
@@ -57,9 +66,10 @@ export function resolveIds(element: YamlModel, uidMapping: UidMapping, reference
     }
 
     if (element.inheritedMembers) {
-        for (const mbr of element.inheritedMembers as Type[]) {
-            const name = mbr.typeName.split('.').pop();
-            referenceMapping[`${element.uid}.${name}`] = restoreType(mbr, uidMapping);
+        for (const child of element.inheritedMembers as Type[]) {
+            const name = child.typeName.split('.').pop();
+            findInheritedMember(child, uidMapping, referenceMapping, rootElement);
+            referenceMapping[`${element.uid}.${name}`] = restoreType(child, uidMapping);
         }
         element.inheritedMembers = restoreReferences(element.inheritedMembers, uidMapping, referenceMapping);
     }
@@ -69,24 +79,41 @@ export function resolveIds(element: YamlModel, uidMapping: UidMapping, reference
     }
 
     for (const child of element.children as YamlModel[]) {
-        resolveIds(child, uidMapping, referenceMapping, rootElement);
-        if (setOfTopLevelItems.has(child.type)) {
-            referenceMapping[child.uid] = `@uid:${child.uid}!@`;
+        resolveInheritance(child, uidMapping, referenceMapping, rootElement);
+    }
+}
+
+function findInheritedMember(node: Type, uidMapping: UidMapping, referenceMapping: ReferenceMapping, parent: YamlModel): void {
+    if (uidMapping[node.typeId]) return;
+
+    const name = node.typeName.split('.');
+
+    for (const element of parent.children as YamlModel[]) {
+        if(element.name !== name[0]) continue;
+        for (const child of element.inheritedMembers as Type[]) {
+            const type = typeToString(child);
+            if (name[1] !== type.split('.').pop()) continue;
+            if (!uidMapping[child.typeId] && !referenceMapping[type]) {
+                name[0] = type.split('.')[0];
+                break;
+            }
+            uidMapping[node.typeId] = uidMapping[child.typeId] ?? type;
+            return;
         }
     }
 }
 
 function restoreLinks(comment: string, uidMapping: UidMapping, referenceMapping: ReferenceMapping, parent: YamlModel): string {
     const link = getLink(comment);
-    if(!link.length) return comment;
+    if (!link.length) return comment;
 
     let parentUid = parent.uid;
     let n = -1;
 
-    while((n = parentUid.lastIndexOf('.')) !== -1) {
+    while ((n = parentUid.lastIndexOf('.')) !== -1) {
         let childUid = parentUid = parentUid.substring(0, n);
         childUid += '.' + link[0];
-        if(!Object.values(uidMapping).includes(childUid)) continue;
+        if (!Object.values(uidMapping).includes(childUid)) continue;
         referenceMapping[childUid] = `@uid:${childUid}!@`;
         break;
     }
@@ -95,24 +122,26 @@ function restoreLinks(comment: string, uidMapping: UidMapping, referenceMapping:
 }
 
 function restoreReferences(types: Types, uidMapping: UidMapping, referenceMapping: ReferenceMapping): string[] {
-    let restoredTypes = restoreTypes(types, uidMapping);
-    return restoredTypes.map<string>(restoreType => {
-        if (restoreType) {
-            let hasUid = false;
-            let restoreTypeTrim = restoreType.replace(uidRegex, (match, uid) => {
-                if (uid) {
-                    hasUid = true;
-                    return uid;
-                }
-                return match;
-            });
-            if (hasUid && referenceMapping[restoreTypeTrim] !== null) {
-                referenceMapping[restoreTypeTrim] = restoreType;
+    return restoreTypes(types, uidMapping).map(restoreType => restoreReference(restoreType, uidMapping, referenceMapping));
+}
+
+function restoreReference(type: Type | string, uidMapping: UidMapping, referenceMapping: ReferenceMapping): string {
+    let _restoreType = restoreType(type, uidMapping);
+    if (_restoreType) {
+        let hasUid = false;
+        let restoreTypeTrim = _restoreType.replace(uidRegex, (match, uid) => {
+            if (uid) {
+                hasUid = true;
+                return uid;
             }
-            return restoreTypeTrim;
+            return match;
+        });
+        if (hasUid && referenceMapping[restoreTypeTrim] !== null) {
+            referenceMapping[restoreTypeTrim] = _restoreType;
         }
-        return restoreType;
-    });
+        return restoreTypeTrim;
+    }
+    return _restoreType;
 }
 
 function restoreTypes(types: Types, uidMapping: UidMapping): string[] {
