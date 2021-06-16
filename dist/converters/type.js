@@ -71,7 +71,7 @@ var TypeConverter = /** @class */ (function (_super) {
                     continue;
                 model.inheritedMembers.push(this.extractType(child.inheritedFrom)[0]);
             }
-            model.inheritedMembers = !model.inheritedMembers.length ? null : model.inheritedMembers;
+            model.inheritedMembers = model.inheritedMembers.length ? model.inheritedMembers : null;
         }
         if (node.implementedTypes && node.implementedTypes.length) {
             model.implements = node.implementedTypes.map(function (type) { return _this.extractType(type)[0]; });

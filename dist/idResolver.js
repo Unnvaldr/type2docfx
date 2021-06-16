@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.typeToString = exports.resolveIds = void 0;
+exports.typeToString = exports.resolveInheritance = exports.resolveIds = void 0;
 var regex_1 = require("./common/regex");
 var constants_1 = require("./common/constants");
 var linkConvertHelper_1 = require("./helpers/linkConvertHelper");
@@ -39,10 +39,20 @@ function resolveIds(element, uidMapping, referenceMapping, rootElement) {
     if (element.example) {
         element.example = element.example.map(function (el) { return restoreLinks(el, uidMapping, referenceMapping, element); });
     }
+    for (var _d = 0, _e = element.children; _d < _e.length; _d++) {
+        var child = _e[_d];
+        resolveIds(child, uidMapping, referenceMapping, rootElement);
+        if (constants_1.setOfTopLevelItems.has(child.type)) {
+            referenceMapping[child.uid] = "@uid:" + child.uid + "!@";
+        }
+    }
+}
+exports.resolveIds = resolveIds;
+function resolveInheritance(element, uidMapping, referenceMapping, rootElement) {
     if (element.inheritance) {
         element.inheritance[0].type = restoreReferences([element.inheritance[0].type], uidMapping, referenceMapping)[0];
-        for (var _d = 0, _e = rootElement.children; _d < _e.length; _d++) {
-            var child = _e[_d];
+        for (var _i = 0, _a = rootElement.children; _i < _a.length; _i++) {
+            var child = _a[_i];
             if (child.uid !== element.inheritance[0].type || !child.inheritance)
                 continue;
             if (child.inheritance[0].type != undefined) {
@@ -54,25 +64,46 @@ function resolveIds(element, uidMapping, referenceMapping, rootElement) {
         }
     }
     if (element.inheritedMembers) {
-        for (var _f = 0, _g = element.inheritedMembers; _f < _g.length; _f++) {
-            var mbr = _g[_f];
-            var name = mbr.typeName.split('.').pop();
-            referenceMapping[element.uid + "." + name] = restoreType(mbr, uidMapping);
+        for (var _b = 0, _c = element.inheritedMembers; _b < _c.length; _b++) {
+            var child = _c[_b];
+            var name = child.typeName.split('.').pop();
+            findInheritedMember(child, uidMapping, referenceMapping, rootElement);
+            referenceMapping[element.uid + "." + name] = restoreType(child, uidMapping);
         }
         element.inheritedMembers = restoreReferences(element.inheritedMembers, uidMapping, referenceMapping);
     }
     if (element.implements) {
         element.implements = restoreReferences(element.implements, uidMapping, referenceMapping);
     }
-    for (var _h = 0, _j = element.children; _h < _j.length; _h++) {
-        var child = _j[_h];
-        resolveIds(child, uidMapping, referenceMapping, rootElement);
-        if (constants_1.setOfTopLevelItems.has(child.type)) {
-            referenceMapping[child.uid] = "@uid:" + child.uid + "!@";
+    for (var _d = 0, _e = element.children; _d < _e.length; _d++) {
+        var child = _e[_d];
+        resolveInheritance(child, uidMapping, referenceMapping, rootElement);
+    }
+}
+exports.resolveInheritance = resolveInheritance;
+function findInheritedMember(node, uidMapping, referenceMapping, parent) {
+    var _a;
+    if (uidMapping[node.typeId])
+        return;
+    var name = node.typeName.split('.');
+    for (var _i = 0, _b = parent.children; _i < _b.length; _i++) {
+        var element = _b[_i];
+        if (element.name !== name[0])
+            continue;
+        for (var _c = 0, _d = element.inheritedMembers; _c < _d.length; _c++) {
+            var child = _d[_c];
+            var type = typeToString(child);
+            if (name[1] !== type.split('.').pop())
+                continue;
+            if (!uidMapping[child.typeId] && !referenceMapping[type]) {
+                name[0] = type.split('.')[0];
+                break;
+            }
+            uidMapping[node.typeId] = (_a = uidMapping[child.typeId]) !== null && _a !== void 0 ? _a : type;
+            return;
         }
     }
 }
-exports.resolveIds = resolveIds;
 function restoreLinks(comment, uidMapping, referenceMapping, parent) {
     var link = linkConvertHelper_1.getLink(comment);
     if (!link.length)
@@ -90,24 +121,25 @@ function restoreLinks(comment, uidMapping, referenceMapping, parent) {
     return comment;
 }
 function restoreReferences(types, uidMapping, referenceMapping) {
-    var restoredTypes = restoreTypes(types, uidMapping);
-    return restoredTypes.map(function (restoreType) {
-        if (restoreType) {
-            var hasUid_1 = false;
-            var restoreTypeTrim = restoreType.replace(regex_1.uidRegex, function (match, uid) {
-                if (uid) {
-                    hasUid_1 = true;
-                    return uid;
-                }
-                return match;
-            });
-            if (hasUid_1 && referenceMapping[restoreTypeTrim] !== null) {
-                referenceMapping[restoreTypeTrim] = restoreType;
+    return restoreTypes(types, uidMapping).map(function (restoreType) { return restoreReference(restoreType, uidMapping, referenceMapping); });
+}
+function restoreReference(type, uidMapping, referenceMapping) {
+    var _restoreType = restoreType(type, uidMapping);
+    if (_restoreType) {
+        var hasUid_1 = false;
+        var restoreTypeTrim = _restoreType.replace(regex_1.uidRegex, function (match, uid) {
+            if (uid) {
+                hasUid_1 = true;
+                return uid;
             }
-            return restoreTypeTrim;
+            return match;
+        });
+        if (hasUid_1 && referenceMapping[restoreTypeTrim] !== null) {
+            referenceMapping[restoreTypeTrim] = _restoreType;
         }
-        return restoreType;
-    });
+        return restoreTypeTrim;
+    }
+    return _restoreType;
 }
 function restoreTypes(types, uidMapping) {
     if (types) {

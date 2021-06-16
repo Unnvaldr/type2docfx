@@ -84,6 +84,7 @@ var referenceMappings = [];
 for (var _i = 0, collection_1 = collection; _i < collection_1.length; _i++) {
     var rootElement = collection_1[_i];
     var referenceMapping = {};
+    idResolver_1.resolveInheritance(rootElement, uidMapping, referenceMapping, rootElement);
     idResolver_1.resolveIds(rootElement, uidMapping, referenceMapping, rootElement);
     referenceMappings.push(referenceMapping);
 }
