@@ -97,8 +97,8 @@ var flattenElements = collection.map(function (rootElement, index) {
 }).reduce(function (a, b) {
     return a.concat(b);
 }, []);
-postTransformer_1.insertLink(flattenElements);
 postTransformer_1.insertClassReferenceForModule(flattenElements);
+postTransformer_1.insertLink(flattenElements);
 console.log('Yaml dump start.');
 fs.ensureDirSync(outputPath);
 for (var _b = 0, flattenElements_1 = flattenElements; _b < flattenElements_1.length; _b++) {

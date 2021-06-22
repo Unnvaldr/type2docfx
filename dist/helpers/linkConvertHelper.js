@@ -87,10 +87,10 @@ function convertLinkToGfm(text, parentUid, refs) {
             var _loop_1 = function () {
                 var childUid = elUid = elUid.substring(0, n);
                 childUid += '.' + criteria;
-                var ref = void 0;
-                if (!(ref = refs.find(function (el) { return el.uid.includes(childUid); })))
+                var ref = refs.find(function (el) { return el.uid.endsWith(childUid); });
+                if (!ref)
                     return "continue";
-                uid = ref['spec.typeScript'][0].uid;
+                uid = ref['spec.typeScript'] ? ref['spec.typeScript'][0].uid : ref.uid;
                 return "break";
             };
             while ((n = elUid.lastIndexOf('.')) !== -1) {
