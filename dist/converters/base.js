@@ -290,6 +290,11 @@ var AbstractConverter = /** @class */ (function () {
                 typeId: type.id
             });
         }
+        else if (type.type === 'literal') {
+            result.push({
+                typeName: type.value ? "\"" + type.value + "\"" : String(type.value),
+            });
+        }
         else if (type.name) {
             result.push({
                 typeName: type.name,
