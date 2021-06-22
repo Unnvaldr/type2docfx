@@ -111,8 +111,8 @@ const flattenElements = collection.map((rootElement, index) => {
     return a.concat(b);
 }, []);
 
-insertLink(flattenElements);
 insertClassReferenceForModule(flattenElements);
+insertLink(flattenElements);
 console.log('Yaml dump start.');
 fs.ensureDirSync(outputPath);
 

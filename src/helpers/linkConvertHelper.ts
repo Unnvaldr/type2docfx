@@ -85,13 +85,12 @@ export function convertLinkToGfm(text: string, parentUid: string, refs: Referenc
       const criteria = namepath.replace(/~|#/g, '.');
       let elUid = parentUid;
       let n = -1;
-
-      while((n = elUid.lastIndexOf('.')) !== -1) {
+      while ((n = elUid.lastIndexOf('.')) !== -1) {
           let childUid = elUid = elUid.substring(0, n);
           childUid += '.' + criteria;
-          let ref;
-          if(!(ref = refs.find(el => el.uid.includes(childUid)))) continue;
-          uid = ref['spec.typeScript'][0].uid;
+          const ref = refs.find(el => el.uid.endsWith(childUid));
+          if (!ref) continue;
+          uid = ref['spec.typeScript'] ? ref['spec.typeScript'][0].uid : ref.uid;
           break;
       }
       return encodeURIComponent(uid);
