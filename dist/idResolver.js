@@ -105,18 +105,21 @@ function findInheritedMember(node, uidMapping, referenceMapping, parent) {
     }
 }
 function restoreLinks(comment, uidMapping, referenceMapping, parent) {
-    var link = linkConvertHelper_1.getLink(comment);
-    if (!link.length)
+    var links = linkConvertHelper_1.getLinks(comment);
+    if (!links.length)
         return comment;
-    var parentUid = parent.uid;
-    var n = -1;
-    while ((n = parentUid.lastIndexOf('.')) !== -1) {
-        var childUid = parentUid = parentUid.substring(0, n);
-        childUid += '.' + link[0];
-        if (!Object.values(uidMapping).includes(childUid))
-            continue;
-        referenceMapping[childUid] = "@uid:" + childUid + "!@";
-        break;
+    for (var _i = 0, links_1 = links; _i < links_1.length; _i++) {
+        var link = links_1[_i];
+        var parentUid = parent.uid;
+        var n = -1;
+        while ((n = parentUid.lastIndexOf('.')) !== -1) {
+            var childUid = parentUid = parentUid.substring(0, n);
+            childUid += '.' + link;
+            if (!Object.values(uidMapping).includes(childUid))
+                continue;
+            referenceMapping[childUid] = "@uid:" + childUid + "!@";
+            break;
+        }
     }
     return comment;
 }

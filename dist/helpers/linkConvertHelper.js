@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertLinkToGfm = exports.getLink = exports.getTextAndLink = void 0;
+exports.convertLinkToGfm = exports.getLinks = exports.getTextAndLink = void 0;
 var dfmRegex = [
     /\[(?:([^\]]+))\]{(@link|@link|@linkcode|@linkplain) +(?:module:)?([^}| ]+)}/g,
     /\{(@link|@linkcode|@linkplain) +(?:module:)?([^}| ]+)(?:(?:\|| +)([^}]+))?\}/g
@@ -17,18 +17,24 @@ function getTextAndLink(text) {
     return [];
 }
 exports.getTextAndLink = getTextAndLink;
-function getLink(text) {
-    var matches = dfmRegex[0].exec(text);
-    if (matches && matches[3]) {
-        return [matches[3].replace(/~|-|#/g, '.')];
+function getLinks(text) {
+    var results = [];
+    var matches;
+    while (matches = dfmRegex[0].exec(text)) {
+        if (!matches[3]) {
+            continue;
+        }
+        results.push(matches[3].replace(/~|-|#/g, '.'));
     }
-    matches = dfmRegex[1].exec(text);
-    if (matches && matches[2]) {
-        return [matches[2].replace(/~|-|#/g, '.')];
+    while (matches = dfmRegex[1].exec(text)) {
+        if (!matches[2]) {
+            continue;
+        }
+        results.push(matches[2].replace(/~|-|#/g, '.'));
     }
-    return [];
+    return results;
 }
-exports.getLink = getLink;
+exports.getLinks = getLinks;
 function convertLinkToGfm(text, parentUid, refs) {
     if (!text)
         return '';
