@@ -17,16 +17,22 @@ export function getTextAndLink(text: string) {
   return [];
 }
 
-export function getLink(text: string) {
-  var matches = dfmRegex[0].exec(text);
-  if (matches && matches[3]) {
-    return [matches[3].replace(/~|-|#/g, '.')];
+export function getLinks(text: string) {
+  const results = [];
+  let matches;
+  while (matches = dfmRegex[0].exec(text)) {
+    if (!matches[3]) {
+      continue;
+    }
+    results.push(matches[3].replace(/~|-|#/g, '.'));
   }
-  matches = dfmRegex[1].exec(text);
-  if (matches && matches[2]) {
-    return [matches[2].replace(/~|-|#/g, '.')];
+  while (matches = dfmRegex[1].exec(text)) {
+    if (!matches[2]) {
+      continue;
+    }
+    results.push(matches[2].replace(/~|-|#/g, '.'));
   }
-  return [];
+  return results;
 }
 
 export function convertLinkToGfm(text: string, parentUid: string, refs: Reference[]) {
