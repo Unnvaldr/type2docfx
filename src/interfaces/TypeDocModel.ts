@@ -3,7 +3,7 @@ export interface Node {
     name: string;
     kind: number;
     kindString: string;
-    children: Node[];
+    children?: Node[];
     flags: Flags;
     comment: Comment;
     signatures: Signature[];

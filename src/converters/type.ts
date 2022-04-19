@@ -47,12 +47,15 @@ export class TypeConverter extends AbstractConverter {
             for (const t of node.extendedTypes) {
                 model.inheritance.push({ type: this.extractType(t)[0] });
             }
-            model.inheritedMembers = [];
-            for(const child of node.children) {
-                if(!child.inheritedFrom) continue;
-                model.inheritedMembers.push(this.extractType(child.inheritedFrom)[0] as any);
+            model.inheritance = model.inheritance.length ? model.inheritance : null;
+            if (node.children && node.children.length) {
+                model.inheritedMembers = [];
+                for (const child of node.children) {
+                    if (!child.inheritedFrom) continue;
+                    model.inheritedMembers.push(this.extractType(child.inheritedFrom)[0] as any);
+                }
+                model.inheritedMembers = model.inheritedMembers.length ? model.inheritedMembers : null;
             }
-            model.inheritedMembers = model.inheritedMembers.length ? model.inheritedMembers : null;
         }
 
         if (node.implementedTypes && node.implementedTypes.length) {
