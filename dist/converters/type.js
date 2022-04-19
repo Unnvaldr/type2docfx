@@ -64,14 +64,17 @@ var TypeConverter = /** @class */ (function (_super) {
                 var t = _a[_i];
                 model.inheritance.push({ type: this.extractType(t)[0] });
             }
-            model.inheritedMembers = [];
-            for (var _b = 0, _c = node.children; _b < _c.length; _b++) {
-                var child = _c[_b];
-                if (!child.inheritedFrom)
-                    continue;
-                model.inheritedMembers.push(this.extractType(child.inheritedFrom)[0]);
+            model.inheritance = model.inheritance.length ? model.inheritance : null;
+            if (node.children && node.children.length) {
+                model.inheritedMembers = [];
+                for (var _b = 0, _c = node.children; _b < _c.length; _b++) {
+                    var child = _c[_b];
+                    if (!child.inheritedFrom)
+                        continue;
+                    model.inheritedMembers.push(this.extractType(child.inheritedFrom)[0]);
+                }
+                model.inheritedMembers = model.inheritedMembers.length ? model.inheritedMembers : null;
             }
-            model.inheritedMembers = model.inheritedMembers.length ? model.inheritedMembers : null;
         }
         if (node.implementedTypes && node.implementedTypes.length) {
             model.implements = node.implementedTypes.map(function (type) { return _this.extractType(type)[0]; });
