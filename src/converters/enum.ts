@@ -13,6 +13,9 @@ export class EnumConverter extends AbstractConverter {
             children: [],
             langs: langs,
             summary: node.comment ? this.findDescriptionInComment(node.comment) : '',
+            syntax: {
+                content: node.defaultValue,
+            },
             type: 'field'
         };
 
