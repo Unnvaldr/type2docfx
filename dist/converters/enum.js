@@ -31,6 +31,9 @@ var EnumConverter = /** @class */ (function (_super) {
             children: [],
             langs: constants_1.langs,
             summary: node.comment ? this.findDescriptionInComment(node.comment) : '',
+            syntax: {
+                content: node.defaultValue,
+            },
             type: 'field'
         };
         console.log(" - " + node.kindString + ": " + uid);

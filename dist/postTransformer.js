@@ -174,7 +174,7 @@ function flattening(element) {
     if (element.children) {
         var childrenUid = [];
         var children = element.children;
-        if (flags_1.flags.enableAlphabetOrder) {
+        if (flags_1.flags.enableAlphabetOrder && !flags_1.flags.tocAlphabetOrderOnly) {
             children = children.sort(sortYamlModel);
         }
         for (var _i = 0, children_2 = children; _i < children_2.length; _i++) {

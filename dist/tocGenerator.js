@@ -19,7 +19,7 @@ function generateItems(element) {
     }
     var children = element.children;
     if (children.length > 1) {
-        if (flags_1.flags.enableAlphabetOrder) {
+        if (flags_1.flags.enableAlphabetOrder || flags_1.flags.tocAlphabetOrderOnly) {
             children = children.sort(sortTOC);
         }
     }
@@ -36,7 +36,7 @@ function generateTOC(elements, packageUid) {
     var itemsDetails = [];
     if (elements) {
         if (elements.length > 1) {
-            if (flags_1.flags.enableAlphabetOrder) {
+            if (flags_1.flags.enableAlphabetOrder || flags_1.flags.tocAlphabetOrderOnly) {
                 elements = elements.sort(sortTOC);
             }
         }
