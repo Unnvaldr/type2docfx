@@ -185,7 +185,7 @@ function flattening(element: YamlModel): Root[] {
   if (element.children) {
     const childrenUid: string[] = [];
     let children = element.children as YamlModel[];
-    if (flags.enableAlphabetOrder) {
+    if (flags.enableAlphabetOrder && !flags.tocAlphabetOrderOnly) {
       children = children.sort(sortYamlModel);
     }
 

@@ -19,7 +19,7 @@ export function generateItems(element: YamlModel): TocItem {
     }
     let children = element.children as YamlModel[];
     if (children.length > 1) {
-        if (flags.enableAlphabetOrder) {
+        if (flags.enableAlphabetOrder || flags.tocAlphabetOrderOnly) {
             children = children.sort(sortTOC);
         }
     }
@@ -36,7 +36,7 @@ export function generateTOC(elements: YamlModel[], packageUid: string): TocItem[
     let itemsDetails: TocItem[] = [];
     if (elements) {
         if (elements.length > 1) {
-            if (flags.enableAlphabetOrder) {
+            if (flags.enableAlphabetOrder || flags.tocAlphabetOrderOnly) {
                 elements = elements.sort(sortTOC);
             }
         }
