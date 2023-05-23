@@ -32,7 +32,7 @@ var EnumConverter = /** @class */ (function (_super) {
             langs: constants_1.langs,
             summary: node.comment ? this.findDescriptionInComment(node.comment) : '',
             syntax: {
-                content: node.defaultValue,
+                content: this.extractType(node.type)[0].typeName,
             },
             type: 'field'
         };

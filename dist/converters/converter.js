@@ -20,7 +20,7 @@ var Converter = /** @class */ (function () {
             case 'Namespace':
             case 'Module':
                 return new module_1.ModuleConverter(references);
-            case 'Enumeration member':
+            case 'Enumeration Member':
                 return new enum_1.EnumConverter(references);
             case 'Property':
             case 'Variable':
