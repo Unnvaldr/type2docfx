@@ -21,7 +21,7 @@ export class Converter {
             case 'Namespace':
             case 'Module':
                 return new ModuleConverter(references);
-            case 'Enumeration member':
+            case 'Enumeration Member':
                 return new EnumConverter(references);
             case 'Property':
             case 'Variable':
