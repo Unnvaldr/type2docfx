@@ -292,7 +292,7 @@ var AbstractConverter = /** @class */ (function () {
         }
         else if (type.type === 'literal') {
             result.push({
-                typeName: type.value ? "\"" + type.value + "\"" : String(type.value),
+                typeName: typeof type.value === 'string' ? "\"" + type.value + "\"" : String(type.value),
             });
         }
         else if (type.name) {
